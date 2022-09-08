@@ -86,6 +86,21 @@ export default {
             <hr />
           </li>
 
+          <RouterLink custom to="/logs" v-slot="{ href, navigate, isActive }">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                aria-current="page"
+                :href="href"
+                :class="{ active: isActive }"
+                @click="navigate"
+              >
+                <i class="fa-solid fa-file"></i>
+                Logfiles
+              </a>
+            </li>
+          </RouterLink>
+
           <li class="nav-item">
             <a class="nav-link" href="#">
               <i class="fa-solid fa-gear"></i> Settings

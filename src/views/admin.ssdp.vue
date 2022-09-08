@@ -39,19 +39,38 @@ export default defineComponent({
           <thead>
             <tr>
               <th scope="col">#</th>
-              <th scope="col">Icon</th>
-              <th scope="col">Name</th>
-              <th scope="col">Floor</th>
+              <th scope="col">Description</th>
+              <th scope="col">NT</th>
+              <th scope="col">USN</th>
+              <th scope="col">Headers</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-bind:key="item._id" v-for="(item, index) in ssdp">
               <th scope="row">{{ index + 1 }}</th>
-              <td><i :class="item.icon"></i></td>
-              <td>{{ item.name }}</td>
-              <td>{{ item.floor }}</td>
-              <td>Actions</td>
+              <td>{{ item.description }}</td>
+              <td>{{ item.nt }}</td>
+              <td>{{ item.usn }}</td>
+              <td>{{ item.headers }}</td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    title="Edit"
+                  >
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger"
+                    title="Delete"
+                  >
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>

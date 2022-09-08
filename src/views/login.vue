@@ -25,27 +25,38 @@ export default defineComponent({
     login() {
       this.error = false;
 
-      /*
       request(
         "/auth/login",
         {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: this.email,
+            password: this.pass,
+          }),
         },
         (err, data) => {
+          console.log(err || data);
+
           if (err) {
             this.error = true;
           } else {
-            alert("Store token in localStorage");
+            if (data.success && data.token) {
+              localStorage.setItem("x-auth-token", data.token);
+
+              setTimeout(() => {
+                router.replace({
+                  path: "/dashboard",
+                });
+              }, 1);
+            } else {
+              this.error = true;
+            }
           }
         }
       );
-      */
-
-      setTimeout(() => {
-        router.replace({
-          path: "/dashboard",
-        });
-      }, 100);
     },
   },
 });
@@ -77,7 +88,7 @@ export default defineComponent({
       <div class="col-md-6 col-sm-12">
         <div class="login-form" v-bind:class="shaking">
           <form>
-            <div class="form-group mb-2">
+            <div class="form-group mb-3">
               <label><h4>E-Mail Address</h4></label>
               <input
                 type="text"
@@ -86,7 +97,7 @@ export default defineComponent({
                 v-model="email"
               />
             </div>
-            <div class="form-group mb-2">
+            <div class="form-group mb-3">
               <label><h4>Password</h4></label>
               <input
                 type="password"

@@ -41,17 +41,49 @@ export default defineComponent({
               <th scope="col">#</th>
               <th scope="col">Name</th>
               <th scope="col">E-Mail</th>
+              <th scope="col">Enabled</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-bind:key="item._id" v-for="(item, index) in users">
               <th scope="row">{{ index + 1 }}</th>
-              <td><i :class="item.icon"></i></td>
               <td>{{ item.name }}</td>
               <td>{{ item.email }}</td>
-              <td>{{ item.floor }}</td>
-              <td>Actions</td>
+              <td>
+                <div class="form-check form-switch">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    v-bind:checked="item.enabled"
+                  />
+                </div>
+              </td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    title="Edit"
+                  >
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    title="Clone"
+                  >
+                    <i class="fa-regular fa-clone"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger"
+                    title="Delete"
+                  >
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>

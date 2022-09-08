@@ -1,6 +1,8 @@
 <script setup>
 import store from "../store.js";
 
+import { getItemById } from "../helper.js";
+
 import Tabs from "@/components/Tabs.vue";
 </script>
 
@@ -41,6 +43,7 @@ export default defineComponent({
               <th scope="col">#</th>
               <th scope="col">Icon</th>
               <th scope="col">Name</th>
+              <th scope="col">Room</th>
               <th scope="col">Enabled</th>
               <th scope="col">Actions</th>
             </tr>
@@ -48,8 +51,9 @@ export default defineComponent({
           <tbody>
             <tr v-bind:key="item._id" v-for="(item, index) in devices">
               <th scope="row">{{ index + 1 }}</th>
-              <td>{{ item.icon }}</td>
+              <td><i v-bind:class="item.icon"></i></td>
               <td>{{ item.name }}</td>
+              <td>{{ getItemById(store.state.rooms, item.room).name }}</td>
               <td>
                 <div class="form-check form-switch">
                   <input

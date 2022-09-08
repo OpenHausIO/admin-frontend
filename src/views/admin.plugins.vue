@@ -42,6 +42,7 @@ export default defineComponent({
               <th scope="col">Name</th>
               <th scope="col">Version</th>
               <th scope="col">UUID</th>
+              <th scope="col">Intents</th>
               <th scope="col">Enabled</th>
               <th scope="col">Actions</th>
             </tr>
@@ -52,6 +53,16 @@ export default defineComponent({
               <td>{{ item.name }}</td>
               <td>v{{ item.version }}</td>
               <td>{{ item.uuid }}</td>
+              <td>
+                <ul style="padding-left: 1rem">
+                  <li
+                    v-bind:key="index"
+                    v-for="(intent, index) in item.intents"
+                  >
+                    {{ intent }}
+                  </li>
+                </ul>
+              </td>
               <td>
                 <div class="form-check form-switch">
                   <input

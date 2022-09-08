@@ -19,6 +19,14 @@ See [Vite Configuration Reference](https://vitejs.dev/config/).
 npm install
 ```
 
+### Create Admin account
+```sh
+curl -X POST --unix-socket /tmp/open-haus.sock
+   http://127.0.0.1:8080/api/users
+   -H 'Content-Type: application/json'
+   -d '{"email":"info@example.com","password":"Pa$$w0rd", "admin": "true"}'
+```
+
 ### Compile and Hot-Reload for Development
 
 ```sh

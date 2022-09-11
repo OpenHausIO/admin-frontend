@@ -59,6 +59,9 @@ export default defineComponent({
               <th scope="col" style="width: 10px">#</th>
               <th scope="col" style="width: 10px">Icon</th>
               <th scope="col">Name</th>
+              <th scope="col">Manufacturer</th>
+              <th scope="col">Model</th>
+              <th scope="col">Revision</th>
               <th scope="col">Room</th>
               <th scope="col" style="width: 10px">Enabled</th>
               <th scope="col" style="width: 10px">Actions</th>
@@ -89,6 +92,36 @@ export default defineComponent({
                   prop="name"
                   type="text"
                 />
+              </td>
+              <td>
+                {{ item.meta || "" }}
+                <!--
+                <EditorProperty
+                  :enabled="item._id === editItem"
+                  :object="item.meta"
+                  prop="manufacturer"
+                  type="text"
+                />-->
+              </td>
+              <td>
+                {{ item.meta || "" }}
+                <!--
+                <EditorProperty
+                  :enabled="item._id === editItem"
+                  :object="item.meta"
+                  prop="manufacturer"
+                  type="text"
+                />-->
+              </td>
+              <td>
+                {{ item.meta || "" }}
+                <!--
+                <EditorProperty
+                  :enabled="item._id === editItem"
+                  :object="item.meta"
+                  prop="manufacturer"
+                  type="text"
+                />-->
               </td>
               <td>
                 <EditorProperty

@@ -2,6 +2,8 @@
 import store from "../store.js";
 
 import Tabs from "@/components/Tabs.vue";
+import EditorProperty from "@/components/EditorProperty.vue";
+import ActionsButtons from "@/components/ActionsButtons.vue";
 </script>
 
 <script>
@@ -10,6 +12,7 @@ import { defineComponent } from "vue";
 export default defineComponent({
   data() {
     return {
+      editItem: null,
       tabItems: [
         {
           name: "Overview",
@@ -27,6 +30,37 @@ export default defineComponent({
       return store.state.plugins;
     },
   },
+  methods: {
+    handleEdit(item) {
+      if (this.editItem === item._id) {
+        this.editItem = null;
+      } else {
+        this.editItem = item._id;
+      }
+    },
+    handleRemove() {},
+    handleInfo() {},
+    showInfo() {},
+    handleStart() {},
+    handleStop() {},
+    createIntentsArray(item) {
+      return [
+        "devices",
+        "endpoints",
+        "plugins",
+        "rooms",
+        "ssdp",
+        "store",
+        "users",
+        "vault",
+      ].map((intent) => {
+        return {
+          name: intent,
+          value: intent,
+        };
+      });
+    },
+  },
 });
 </script>
 
@@ -42,9 +76,12 @@ export default defineComponent({
               <th scope="col">Name</th>
               <th scope="col">Version</th>
               <th scope="col">UUID</th>
-              <th scope="col">Intents</th>
-              <th scope="col">Enabled</th>
-              <th scope="col">Actions</th>
+              <th scope="col">
+                Intents <span v-if="editItem">(Granted)</span>
+              </th>
+              <th scope="col" style="width: 10px">Autostart</th>
+              <th scope="col" style="width: 10px">Enabled</th>
+              <th scope="col" style="width: 10px">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -54,14 +91,35 @@ export default defineComponent({
               <td>v{{ item.version }}</td>
               <td>{{ item.uuid }}</td>
               <td>
-                <ul style="padding-left: 1rem">
-                  <li
-                    v-bind:key="index"
-                    v-for="(intent, index) in item.intents"
-                  >
-                    {{ intent }}
-                  </li>
-                </ul>
+                <EditorProperty
+                  :enabled="item._id === editItem"
+                  :object="item"
+                  prop="intents"
+                  type="checkbox"
+                  :items="createIntentsArray(item)"
+                >
+                  <template v-slot:display>
+                    <ul style="padding-left: 1rem">
+                      <li
+                        v-bind:key="index"
+                        v-for="(intent, index) in item.intents"
+                      >
+                        {{ intent }}
+                      </li>
+                    </ul>
+                  </template>
+                </EditorProperty>
+              </td>
+              <td>
+                <div class="form-check form-switch">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    :disabled="!item.enabled"
+                    v-bind:checked="item.autostart"
+                    v-model="item.autostart"
+                  />
+                </div>
               </td>
               <td>
                 <div class="form-check form-switch">
@@ -69,33 +127,42 @@ export default defineComponent({
                     class="form-check-input"
                     type="checkbox"
                     v-bind:checked="item.enabled"
+                    v-model="item.enabled"
+                    v-on:click="item.autostart = false"
                   />
                 </div>
               </td>
               <td>
-                <div class="btn-group" role="group">
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary"
-                    title="Edit"
-                  >
-                    <i class="fa-solid fa-pen-to-square"></i>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    title="Clone"
-                  >
-                    <i class="fa-regular fa-clone"></i>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-danger"
-                    title="Delete"
-                  >
-                    <i class="fa-solid fa-trash-can"></i>
-                  </button>
-                </div>
+                <ActionsButtons
+                  :showEdit="true"
+                  :showRemove="true"
+                  :showInfo="true"
+                  :item="item"
+                  @handleEdit="handleEdit"
+                  @handleInfo="handleInfo"
+                  @handleRemove="handleRemove"
+                >
+                  <template v-slot:custom>
+                    <button
+                      type="button"
+                      class="btn btn-outline-success"
+                      title="Stop Plugins"
+                      :disabled="!item.enabled"
+                      v-on:click="handleStart(item)"
+                    >
+                      <i class="fa-solid fa-power-off"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger"
+                      title="Start Plugin"
+                      :disabled="!item.enabled"
+                      v-on:click="handleStop(item)"
+                    >
+                      <i class="fa-solid fa-power-off"></i>
+                    </button>
+                  </template>
+                </ActionsButtons>
               </td>
             </tr>
           </tbody>
@@ -107,3 +174,6 @@ export default defineComponent({
     <!--plugins: {{ plugins }}-->
   </div>
 </template>
+
+<style scoped>
+</style>

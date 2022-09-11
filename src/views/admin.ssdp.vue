@@ -2,6 +2,8 @@
 import store from "../store.js";
 
 import Tabs from "@/components/Tabs.vue";
+import EditorProperty from "@/components/EditorProperty.vue";
+import ActionsButtons from "@/components/ActionsButtons.vue";
 </script>
 
 <script>
@@ -10,6 +12,7 @@ import { defineComponent } from "vue";
 export default defineComponent({
   data() {
     return {
+      editItem: null,
       tabItems: [
         {
           name: "Overview",
@@ -27,6 +30,16 @@ export default defineComponent({
       return store.state.ssdp;
     },
   },
+  methods: {
+    handleEdit(item) {
+      if (this.editItem === item._id) {
+        this.editItem = null;
+      } else {
+        this.editItem = item._id;
+      }
+    },
+    handleRemove() {},
+  },
 });
 </script>
 
@@ -43,33 +56,50 @@ export default defineComponent({
               <th scope="col">NT</th>
               <th scope="col">USN</th>
               <th scope="col">Headers</th>
-              <th scope="col">Actions</th>
+              <th scope="col" style="width: 10px">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-bind:key="item._id" v-for="(item, index) in ssdp">
               <th scope="row">{{ index + 1 }}</th>
-              <td>{{ item.description }}</td>
+              <td>
+                <EditorProperty
+                  :enabled="item._id === editItem"
+                  :object="item"
+                  prop="description"
+                  type="text"
+                />
+              </td>
               <td>{{ item.nt }}</td>
               <td>{{ item.usn }}</td>
-              <td>{{ item.headers }}</td>
               <td>
-                <div class="btn-group" role="group">
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary"
-                    title="Edit"
-                  >
-                    <i class="fa-solid fa-pen-to-square"></i>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-danger"
-                    title="Delete"
-                  >
-                    <i class="fa-solid fa-trash-can"></i>
-                  </button>
-                </div>
+                <EditorProperty
+                  :enabled="item._id === editItem"
+                  :object="item"
+                  prop="headers"
+                  type="textarea"
+                >
+                  <template v-slot:display>
+                    <ul style="padding-left: 1rem">
+                      <li
+                        v-bind:key="index"
+                        v-for="(header, index) in item.headers"
+                      >
+                        {{ header }}
+                      </li>
+                    </ul>
+                  </template>
+                </EditorProperty>
+              </td>
+
+              <td>
+                <ActionsButtons
+                  :showEdit="true"
+                  :showRemove="true"
+                  :item="item"
+                  @handleEdit="handleEdit"
+                  @handleRemove="handleRemove"
+                />
               </td>
             </tr>
           </tbody>

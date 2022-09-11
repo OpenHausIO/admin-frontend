@@ -2,6 +2,9 @@
 import store from "../store.js";
 
 import Tabs from "@/components/Tabs.vue";
+import EditorProperty from "@/components/EditorProperty.vue";
+import ActionsButtons from "@/components/ActionsButtons.vue";
+import IconSelect from "@/components/IconSelect.vue";
 </script>
 
 <script>
@@ -10,6 +13,7 @@ import { defineComponent } from "vue";
 export default defineComponent({
   data() {
     return {
+      editItem: null,
       tabItems: [
         {
           name: "Overview",
@@ -27,34 +31,19 @@ export default defineComponent({
       dynamicSlots: [],
     };
   },
-  mounted() {
-    setTimeout(() => {
-      store.commit("delete", "foo");
-
-      let room1 = store.state.rooms[0];
-      let room2 = store.state.rooms[1];
-
-      this.tabItems.push({
-        name: room1.name,
-        id: `${room1._id}`,
-      });
-
-      this.dynamicSlots.push({
-        id: `${room1._id}`,
-        content: room1,
-      });
-
-      this.tabItems.push({
-        name: room2.name,
-        id: `${room2._id}`,
-      });
-
-      this.dynamicSlots.push({
-        id: `${room2._id}`,
-        content: room2,
-      });
-    }, 3000);
+  methods: {
+    handleEdit(item) {
+      if (this.editItem === item._id) {
+        this.editItem = null;
+      } else {
+        this.editItem = item._id;
+      }
+    },
+    handleInfo() {},
+    handleRemove() {},
+    handleClone() {},
   },
+  mounted() {},
   computed: {
     rooms() {
       return store.state.rooms;
@@ -72,51 +61,59 @@ export default defineComponent({
         <table class="table text-white border-secondary">
           <thead>
             <tr>
-              <th scope="col">#</th>
-              <th scope="col">Icon</th>
+              <th scope="col" style="width: 10px">#</th>
+              <th scope="col" style="width: 10px">Icon</th>
               <th scope="col">Name</th>
               <th scope="col">Floor</th>
-              <th scope="col">Actions</th>
+              <th scope="col" style="width: 10px">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-bind:key="item._id" v-for="(item, index) in rooms">
               <th scope="row">{{ index + 1 }}</th>
-              <td><i :class="item.icon"></i></td>
-              <td>{{ item.name }}</td>
-              <td>{{ item.floor }}</td>
               <td>
-                <div class="btn-group" role="group">
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary"
-                    title="Edit"
-                  >
-                    <i class="fa-solid fa-pen-to-square"></i>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-info"
-                    title="Info"
-                  >
-                    <i class="fa-solid fa-circle-info"></i>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    title="Clone"
-                  >
-                    <i class="fa-regular fa-clone"></i>
-                  </button>
-
-                  <button
-                    type="button"
-                    class="btn btn-outline-danger"
-                    title="Delete"
-                  >
-                    <i class="fa-solid fa-trash-can"></i>
-                  </button>
-                </div>
+                <EditorProperty
+                  :enabled="item._id === editItem"
+                  :object="item"
+                  prop="icon"
+                  type="text"
+                >
+                  <template v-slot:editor="{ value }">
+                    <IconSelect :item="item" :icon="value" />
+                  </template>
+                  <template v-slot:display="{ value }">
+                    <i :class="value"></i>
+                  </template>
+                </EditorProperty>
+              </td>
+              <td>
+                <EditorProperty
+                  :enabled="item._id === editItem"
+                  :object="item"
+                  prop="name"
+                  type="text"
+                />
+              </td>
+              <td>
+                <EditorProperty
+                  :enabled="item._id === editItem"
+                  :object="item"
+                  prop="floor"
+                  type="number"
+                >
+                </EditorProperty>
+              </td>
+              <td>
+                <ActionsButtons
+                  :showEdit="true"
+                  :showInfo="true"
+                  :showRemove="true"
+                  :item="item"
+                  @handleEdit="handleEdit"
+                  @handleInfo="handleInfo"
+                  @handleRemove="handleRemove"
+                  @handleClone="handleClone"
+                />
               </td>
             </tr>
           </tbody>
@@ -126,32 +123,46 @@ export default defineComponent({
       <!-- ADD-->
       <template v-slot:add>
         <div>
-          <form>
-            <div class="form-group">
-              <label>Room Name</label>
-              <input type="email" class="form-control bg-dark text-white" />
-              <small id="emailHelp" class="form-text text-muted"
-                >We'll never share your email with anyone else.</small
-              >
+          <div class="row">
+            <div class="col-6">
+              <form>
+                <div class="form-group mb-2">
+                  <label>Room Name</label>
+                  <input type="text" class="form-control bg-dark text-white" />
+                </div>
+                <div class="form-group mb-2">
+                  <label>Floor/Level</label>
+                  <input
+                    type="number"
+                    class="form-control bg-dark text-white"
+                    value="0"
+                  />
+                </div>
+                <div class="form-group mb-4">
+                  <label>Icon</label>
+                  <div class="input-group mb-2">
+                    <div class="input-group-prepend">
+                      <button
+                        class="btn btn-outline-secondary rounded-start"
+                        type="button"
+                      >
+                        Button
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      class="form-control bg-dark border-secondary"
+                      placeholder="fa-solid fa-light-bulb"
+                    />
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-outline-primary">
+                  Save
+                </button>
+              </form>
             </div>
-            <div class="form-group">
-              <label>Password</label>
-              <input type="password" class="form-control bg-dark" />
-            </div>
-            <div class="form-check form-switch">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="flexSwitchCheckDefault"
-              />
-              <label class="form-check-label" for="flexSwitchCheckDefault"
-                >Default switch checkbox input</label
-              >
-            </div>
-            <button type="submit" class="btn btn-outline-primary">
-              Submit
-            </button>
-          </form>
+            <div class="col-6">Help text</div>
+          </div>
         </div>
       </template>
       <!-- ADD-->

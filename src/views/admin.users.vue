@@ -2,6 +2,7 @@
 import store from "../store.js";
 
 import Tabs from "@/components/Tabs.vue";
+import ActionsButtons from "@/components/ActionsButtons.vue";
 </script>
 
 <script>
@@ -22,6 +23,14 @@ export default defineComponent({
       ],
     };
   },
+  methods: {
+    tokens(arr, length) {
+      console.log("Tokens arr", arr);
+      return arr.map((str) => {
+        return `${str.substr(0, length)}...${str.substr(-length, str.length)}`;
+      });
+    },
+  },
   computed: {
     users() {
       return store.state.users;
@@ -41,8 +50,9 @@ export default defineComponent({
               <th scope="col">#</th>
               <th scope="col">Name</th>
               <th scope="col">E-Mail</th>
-              <th scope="col">Enabled</th>
-              <th scope="col">Actions</th>
+              <th scope="col">Tokens</th>
+              <th scope="col" style="width: 10px">Enabled</th>
+              <th scope="col" style="width: 10px">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -51,38 +61,43 @@ export default defineComponent({
               <td>{{ item.name }}</td>
               <td>{{ item.email }}</td>
               <td>
+                <ul style="padding-left: 1rem">
+                  <li
+                    v-bind:key="index"
+                    v-for="(intent, index) in tokens(item.tokens, 20)"
+                  >
+                    {{ intent }}
+                  </li>
+                </ul>
+              </td>
+              <td>
                 <div class="form-check form-switch">
                   <input
                     class="form-check-input"
                     type="checkbox"
                     v-bind:checked="item.enabled"
+                    v-model="item.enabled"
                   />
                 </div>
               </td>
               <td>
-                <div class="btn-group" role="group">
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary"
-                    title="Edit"
-                  >
-                    <i class="fa-solid fa-pen-to-square"></i>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    title="Clone"
-                  >
-                    <i class="fa-regular fa-clone"></i>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-danger"
-                    title="Delete"
-                  >
-                    <i class="fa-solid fa-trash-can"></i>
-                  </button>
-                </div>
+                <ActionsButtons
+                  :showEdit="true"
+                  :showInfo="true"
+                  :showRemove="true"
+                  :item="item"
+                >
+                  <template v-slot:custom>
+                    <button
+                      type="button"
+                      class="btn btn-outline-warning"
+                      title="Logout"
+                      :disabled="index === 2"
+                    >
+                      <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                  </template>
+                </ActionsButtons>
               </td>
             </tr>
           </tbody>

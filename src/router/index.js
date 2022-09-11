@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory } from "vue-router";
+import { request } from "../helper.js";
 
 const routes = [{
     path: "/rooms",
@@ -57,6 +58,11 @@ const router = createRouter({
             component: () => import("../views/admin.logfiles.vue")
         },
         {
+            path: "/environment",
+            name: "Environment",
+            component: () => import("../views/admin.environment.vue")
+        },
+        {
             path: "/",
             name: "Login",
             component: () => import("../views/login.vue")
@@ -70,9 +76,82 @@ const router = createRouter({
     ]
 });
 
-// https://router.vuejs.org/guide/advanced/navigation-guards.html
-router.beforeEach((to, from) => {
-    return true;
+router.beforeEach((to, from, next) => {
+    if (window.localStorage.getItem("x-auth-token")) {
+
+        console.log("Token found, check if still valid");
+
+        // check if token is still valid
+        // if not, remove token
+        request("/api/rooms", {
+            "x-auth-token": window.localStorage.getItem("x-auth-token")
+        }, (err) => {
+            if (err) {
+
+                console.log("Token invalid, remove it", err);
+
+                // remove token beacuse its invalid
+                window.localStorage.removeItem("x-auth-token");
+
+                // token is invalied
+                // redirect to login page
+                next({
+                    name: "Login"
+                });
+
+
+            } else {
+
+                console.log("Token valid, continue");
+
+                // token is still valid
+                if (from.path === "/") {
+                    next({
+                        path: "/dashboard"
+                    });
+                } else {
+                    next();
+                }
+
+
+            }
+        });
+
+    } else {
+
+        console.log("Token not found, check if requests are protected");
+
+        // no token found
+        // check if requests are stil valid without token
+        request("/api/about", (err) => {
+            if (err) {
+
+                console.log("Token required!");
+
+                // token is invalied
+                // redirect to login page
+                next({
+                    name: "Login"
+                });
+
+
+            } else {
+
+                console.log("Request still valid, continue", to, from);
+
+                // token is still valid
+                if (to.path === "/") {
+                    next({
+                        path: "/dashboard"
+                    });
+                } else {
+                    next();
+                }
+
+            }
+        });
+
+    }
 });
 
 export default router;

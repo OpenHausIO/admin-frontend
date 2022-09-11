@@ -1,15 +1,54 @@
 <script setup>
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap";
-import { routes } from "./router/index.js";
+import { routes, router } from "./router/index.js";
+
+import "@dafcoe/vue-notification/dist/vue-notification.css";
 </script>
 
 <script>
+import { useNotificationStore } from "@dafcoe/vue-notification";
+
+const { setNotification } = useNotificationStore();
 export default {
   data() {
     return {
       overlay: false,
+      authToken: window.localStorage.getItem("x-auth-token"),
     };
+  },
+  computed: {
+    expertSettingsCheckbox: {
+      get() {
+        if (window.localStorage.getItem("expertSettings")) {
+          return Boolean(window.localStorage.getItem("expertSettings"));
+        }
+
+        return false;
+      },
+      set(val) {
+        let message = "Expert settings disabled!";
+
+        if (val) {
+          message = "Expert settings enabled!";
+        }
+
+        setNotification({
+          message,
+          type: "info",
+          showIcon: true,
+          dismiss: {
+            manually: true,
+            automatically: true,
+          },
+          duration: 5000,
+          showDurationProgress: true,
+          appearance: "light",
+        });
+
+        window.localStorage.setItem("expertSettings", String(val));
+      },
+    },
   },
   methods: {
     subIsActive(input) {
@@ -17,6 +56,31 @@ export default {
       return paths.some((path) => {
         return this.$route.path.indexOf(path) === 0; // current path starts with this path string
       });
+    },
+    logout() {
+      window.request(
+        "/auth/logout",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+        (err, data) => {
+          if (err) {
+            console.log("LOGOUT ERROR", err);
+            console.log(err || data);
+            router.replace({
+              path: "/",
+            });
+          } else {
+            window.localStorage.removeItem("x-auth-token");
+            router.replace({
+              path: "/",
+            });
+          }
+        }
+      );
     },
   },
 };
@@ -32,6 +96,10 @@ export default {
   </div>
   <!-- OVERLAY -->
 
+  <!-- NOTIFICATIONS -->
+  <div id="notifications">
+    <vue-notification-list position="top-right"></vue-notification-list>
+  </div>
   <!-- NAVIGATION -->
 
   <div class="container-fluid">
@@ -107,11 +175,30 @@ export default {
             </a>
           </li>
 
-          <li class="nav-item">
-            <a class="nav-link" href="#">
+          <li class="nav-item" v-if="authToken">
+            <a class="nav-link" href="#" v-on:click.prevent="logout()">
               <i class="fa-solid fa-right-from-bracket"></i> Logout
             </a>
           </li>
+
+          <RouterLink
+            custom
+            to="/environment"
+            v-slot="{ href, navigate, isActive }"
+          >
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                aria-current="page"
+                :href="href"
+                :class="{ active: isActive }"
+                @click="navigate"
+              >
+                <i class="fa-solid fa-sliders"></i>
+                Environment
+              </a>
+            </li>
+          </RouterLink>
 
           <li class="nav-item">
             <hr />
@@ -122,11 +209,15 @@ export default {
               <input
                 class="form-check-input"
                 type="checkbox"
-                id="flexSwitchCheckDefault"
+                id="expertSettingsCheckbox"
+                v-model="expertSettingsCheckbox"
               />
-              <label class="form-check-label small" for="flexSwitchCheckDefault"
-                >Advanced Settings</label
+              <label
+                class="form-check-label small"
+                for="expertSettingsCheckbox"
               >
+                Expert Settings
+              </label>
             </div>
           </li>
         </ul>

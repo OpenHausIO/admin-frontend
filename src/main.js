@@ -3,13 +3,10 @@ import App from "./App.vue";
 import router from "./router";
 import store from "./store.js";
 
-/*
-window.store = {
-    rooms: new Set(),
-    endpoints: new Set(),
-    devices: new Set()
-};
-*/
+import VueNotificationList from '@dafcoe/vue-notification'
+
+import { request } from "./helper.js";
+
 
 // monkey patch ws
 window.events = null;
@@ -18,119 +15,6 @@ window.events = null;
 
 // create vue app
 const app = createApp(App);
-
-
-function promisfy(worker, cb) {
-
-    let wrapper = new Promise((resolve, reject) => {
-        worker((err, ...args) => {
-            if (err) {
-                reject(err);
-            } else {
-
-                // NOTE: GOOD PRACTICE?!
-                if (args.length === 1 && !cb) {
-                    resolve(args[0]);
-                } else {
-                    resolve(args);
-                }
-
-            }
-        });
-    });
-
-    if (cb) {
-
-        wrapper.then((args) => {
-            cb(null, ...args);
-        }).catch((err) => {
-            cb(err);
-        });
-
-        //return undefined;
-
-    } else {
-
-        return wrapper;
-
-    }
-
-}
-
-
-function request(url, options, cb) {
-
-    if (!cb && options instanceof Function) {
-        cb = options;
-        options = null;
-    }
-
-    options = Object.assign({
-        method: "GET"
-    }, options);
-
-    console.log(`[REQUEST] ${options.method}: ${url}`)
-
-    return promisfy((done) => {
-
-        let controller = new AbortController();
-        let id = setTimeout(() => controller.abort(), 1000);
-
-        fetch(url, {
-            ...options,
-            signal: controller.signal
-        }).then((response) => {
-            clearTimeout(id);
-            return response.json();
-        }).then((data) => {
-            done(null, data);
-        }).catch(done);
-
-
-
-    }, cb);
-
-}
-
-function debounce(func, wait, immediate = false) {
-
-    let timeout = null;
-
-    return function (...args) {
-
-        console.log("Debounce child claled")
-
-        let later = () => {
-
-            timeout = null;
-
-            if (!immediate) {
-                func.apply(this, args);
-            }
-
-        };
-
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-
-        if (immediate && !timeout) {
-            func.apply(this, args);
-        }
-
-    };
-
-}
-
-
-// fix for vue components
-// vue components dont find if 
-// not explicitly assign to window object
-Object.assign(window, {
-    promisfy,
-    request,
-    debounce
-});
-
 
 
 Promise.all([
@@ -209,7 +93,7 @@ Promise.all([
             plugins,
             users,
             vault,
-            config, // config = store
+            config, // config = store component
             ssdp
         ]) => {
 
@@ -243,6 +127,8 @@ Promise.all([
 
     app.use(router);
     app.use(store);
+
+    app.use(VueNotificationList)
 
     app.mount("#app");
 

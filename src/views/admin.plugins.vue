@@ -146,18 +146,26 @@ export default defineComponent({
                     <button
                       type="button"
                       class="btn btn-outline-success"
-                      title="Stop Plugins"
                       :disabled="!item.enabled"
                       v-on:click="handleStart(item)"
+                      :class="{
+                        'text-muted': !item.enabled,
+                        'border-secondary': !item.enabled,
+                      }"
+                      v-tooltip:bottom="'Start Plugin'"
                     >
                       <i class="fa-solid fa-power-off"></i>
                     </button>
                     <button
                       type="button"
                       class="btn btn-outline-danger"
-                      title="Start Plugin"
                       :disabled="!item.enabled"
                       v-on:click="handleStop(item)"
+                      :class="{
+                        'text-muted': !item.enabled,
+                        'border-secondary': !item.enabled,
+                      }"
+                      v-tooltip:bottom="'Stop Plugin'"
                     >
                       <i class="fa-solid fa-power-off"></i>
                     </button>

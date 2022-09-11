@@ -13,6 +13,7 @@ export default defineComponent({
   data() {
     return {
       pair: [],
+      data: {},
     };
   },
   mounted() {
@@ -20,6 +21,7 @@ export default defineComponent({
       if (err) {
         console.log(err || data);
       } else {
+        this.data = data;
         Object.keys(data.environment).forEach((key) => {
           this.pair.push({
             key,
@@ -36,6 +38,11 @@ export default defineComponent({
 <template>
   <div>
     <h3>Environment variables</h3>
+
+    <div v-bind:key="index" v-for="(val, key, index) in data">
+      {{ key }} - {{ val }}
+    </div>
+
     <table class="table text-white">
       <thead>
         <tr>

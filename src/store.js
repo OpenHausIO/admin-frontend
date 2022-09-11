@@ -46,7 +46,7 @@ let itemWrapper = (item, component) => {
                         "manually": true,
                         "automatically": true
                     },
-                    "duration": 5000,
+                    "duration": 2000,
                     "showDurationProgress": true,
                     "appearance": "light"
                 });
@@ -57,8 +57,17 @@ let itemWrapper = (item, component) => {
 
     }, 100);
 
-    // with reactivitiy vue browser extentions display nothing more...
-    return new Proxy(reactive(item), {
+    // with reactivitiy, vue browser extentions display nothing more...
+    if (![
+        "127.0.0.1",
+        "localhost"
+    ].includes(window.location.hostname) || window.forceReactiviy) {
+        item = reactive(item)
+    } else {
+        console.error("Reacvitiy may be not working 100%");
+    }
+
+    return new Proxy(item, {
         //return new Proxy(item, {
         set(target, prop, value) {
 

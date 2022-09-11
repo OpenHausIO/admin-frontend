@@ -29,6 +29,8 @@ export default defineComponent({
         },
       ],
       dynamicSlots: [],
+      currentSort: "name",
+      currentSortDir: "asc",
     };
   },
   methods: {
@@ -42,11 +44,27 @@ export default defineComponent({
     handleInfo() {},
     handleRemove() {},
     handleClone() {},
+    sort(s) {
+      //if s == current sort, reverse
+      if (s === this.currentSort) {
+        this.currentSortDir = this.currentSortDir === "asc" ? "desc" : "asc";
+      }
+      this.currentSort = s;
+    },
   },
   mounted() {},
   computed: {
     rooms() {
       return store.state.rooms;
+    },
+    sortedItems: function () {
+      return this.rooms.sort((a, b) => {
+        let modifier = 1;
+        if (this.currentSortDir === "desc") modifier = -1;
+        if (a[this.currentSort] < b[this.currentSort]) return -1 * modifier;
+        if (a[this.currentSort] > b[this.currentSort]) return 1 * modifier;
+        return 0;
+      });
     },
   },
 });
@@ -63,8 +81,8 @@ export default defineComponent({
             <tr>
               <th scope="col" style="width: 10px">#</th>
               <th scope="col" style="width: 10px">Icon</th>
-              <th scope="col">Name</th>
-              <th scope="col">Floor</th>
+              <th scope="col" @click="sort('name')">Name</th>
+              <th scope="col" @click="sort('floor')">Floor</th>
               <th scope="col" style="width: 10px">Actions</th>
             </tr>
           </thead>

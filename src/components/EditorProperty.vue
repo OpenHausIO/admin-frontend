@@ -25,7 +25,11 @@ export default defineComponent({
     },
     rows: {
       type: Number,
-      defualt: 3,
+      default: 3,
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
     },
   },
 });
@@ -42,6 +46,7 @@ export default defineComponent({
           v-if="type == 'textarea'"
           :rows="rows"
           v-model="object[prop]"
+          :disabled="disabled"
         ></textarea>
         <!-- TEXTAREA -->
         <!-- CHECKBOX LISTING -->
@@ -53,6 +58,7 @@ export default defineComponent({
                 type="checkbox"
                 :value="item.value"
                 v-model="object[prop]"
+                :disabled="disabled"
               />
               <label class="form-check-label small">
                 {{ item.name }}
@@ -75,6 +81,7 @@ export default defineComponent({
           class="form-select bg-dark text-white"
           v-model="object[prop]"
           v-else-if="type === 'select'"
+          :disabled="disabled"
         >
           <option :value="item._id" v-bind:key="item._id" v-for="item in items">
             {{ item.name }}
@@ -86,6 +93,7 @@ export default defineComponent({
           :type="type"
           v-model="object[prop]"
           class="form-control bg-dark text-white"
+          :disabled="disabled"
           v-else
         />
         <!-- TEXT/NUMBER/EMAIL/DATE/COLOR/DEFAULT -->

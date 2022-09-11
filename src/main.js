@@ -3,18 +3,44 @@ import App from "./App.vue";
 import router from "./router";
 import store from "./store.js";
 
-import VueNotificationList from '@dafcoe/vue-notification'
+import VueNotificationList from '@dafcoe/vue-notification';
+import { Tooltip } from "bootstrap";
 
 import { request } from "./helper.js";
 
 
 // monkey patch ws
 window.events = null;
-
+window.forceReactiviy = false;
 
 
 // create vue app
 const app = createApp(App);
+
+
+if (![
+    "localhost",
+    "127.0.0.1"
+].includes(window.location.hostname)) {
+    let noop = () => { };
+    console = {
+        log: noop,
+        warn: noop,
+        error: noop,
+        info: noop,
+        debug: noop
+    };
+}
+
+
+app.directive('tooltip', (el, binding) => {
+    return new Tooltip(el, {
+        title: binding.value || "<i>no value</i>",
+        placement: binding.arg || "bottom",
+        trigger: "hover",
+        customClass: "custom-tooltip"
+    });
+});
 
 
 Promise.all([
@@ -75,6 +101,7 @@ Promise.all([
 
     }),
 
+
     // fetch /api resources
     new Promise((resolve, reject) => {
         Promise.all([
@@ -126,9 +153,9 @@ Promise.all([
     console.log("Preshit done, mount vue app");
 
     app.use(router);
-    app.use(store);
+    //app.use(store);
 
-    app.use(VueNotificationList)
+    app.use(VueNotificationList);
 
     app.mount("#app");
 

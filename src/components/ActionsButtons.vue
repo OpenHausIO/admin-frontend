@@ -53,27 +53,27 @@ export default defineComponent({
     <button
       type="button"
       class="btn btn-outline-primary"
-      title="Edit"
       v-if="showEdit"
       v-on:click="handleEdit(item)"
+      v-tooltip:bottom="'Edit Item'"
     >
       <i class="fa-solid fa-pen-to-square"></i>
     </button>
     <button
       type="button"
       class="btn btn-outline-info"
-      title="Info"
       v-if="showInfo"
       v-on:click="handleInfo(item)"
+      v-tooltip:bottom="'View Info'"
     >
       <i class="fa-solid fa-circle-info"></i>
     </button>
     <button
       type="button"
       class="btn btn-outline-secondary"
-      title="Clone"
       v-if="showClone"
       v-on:click="handleClone(item)"
+      v-tooltip:bottom="'Clone Item'"
     >
       <i class="fa-regular fa-clone"></i>
     </button>
@@ -83,9 +83,9 @@ export default defineComponent({
     <button
       type="button"
       class="btn btn-outline-danger"
-      title="Delete"
       v-if="showRemove"
       v-on:click="handleRemove(item)"
+      v-tooltip:bottom="'Delete Item'"
     >
       <i class="fa-solid fa-trash-can"></i>
     </button>

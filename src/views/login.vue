@@ -3,6 +3,7 @@
 import "animate.css";
 import { defineComponent } from "vue";
 import router from "../router/index.js";
+import { request } from "../helper.js";
 
 export default defineComponent({
   data() {
@@ -10,6 +11,8 @@ export default defineComponent({
       error: false,
       email: null,
       pass: null,
+      hostname: window.location.hostname,
+      hostnames: ["open-haus.cloud", "open-haus.io"],
     };
   },
   computed: {
@@ -67,21 +70,43 @@ export default defineComponent({
   <div>
     <div class="sidenav">
       <div class="login-main-text">
-        <h2>OpenHaus</h2>
-        <p>Login to access the OpenHaus SmartHome/IoT instance.</p>
-        <p>
-          If you dont have any credentials ask the Administrator to create a
-          account for you.
-        </p>
-        <p>
-          When you are the Admin,
-          <a
-            href="https://docs.open-haus.io/#/administration/configuration"
-            target="_blank"
-            >create</a
-          >
-          a local Administrator account.
-        </p>
+        <div v-if="hostnames.includes(hostname)">
+          <h2>OpenHaus</h2>
+          <hr />
+          <p>
+            Your personal cloud or on-premise hosted SmartHome/IoT solution.
+          </p>
+          <p>Login or ask your Operator to gain access for you.</p>
+          <p>
+            Dont know a Operator or have access to a existing instance?<br /><br />
+            Create one by your self: <br />
+            <a href="http://open-haus.cloud" target="_blank"
+              >https://open-haus.cloud
+            </a>
+          </p>
+          <p>
+            The first month is absolutly <i>free</i>.<br />
+            <b>No</b> credit card required!
+          </p>
+        </div>
+        <div v-else>
+          <h2>OpenHaus</h2>
+          <hr />
+          <p>Login to access the OpenHaus SmartHome/IoT instance.</p>
+          <p>
+            If you dont have any credentials ask the Administrator to create a
+            account for you.
+          </p>
+          <p>
+            When you are the Admin,
+            <a
+              href="https://docs.open-haus.io/#/administration/configuration"
+              target="_blank"
+              >create</a
+            >
+            a local Administrator account.
+          </p>
+        </div>
       </div>
     </div>
     <div class="main">

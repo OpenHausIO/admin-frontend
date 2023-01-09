@@ -19,7 +19,7 @@ export default defineComponent({
   },
   data() {
     return {
-      showPopup: true,
+      showPopup: false,
       newValue: "",
       icons: [],
       tabItems: [

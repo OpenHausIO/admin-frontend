@@ -32,5 +32,6 @@ export default defineConfig({
                 target: `${BACKEND_PROTOCOL}://${BACKEND_HOST}:${BACKEND_PORT}`
             }
         }
-    }
+    },
+    clearScreen: false
 });

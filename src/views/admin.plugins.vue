@@ -9,6 +9,9 @@ import ActionsButtons from "@/components/ActionsButtons.vue";
 <script>
 import { defineComponent } from "vue";
 
+import { useNotificationStore } from "@dafcoe/vue-notification";
+const { setNotification } = useNotificationStore();
+
 export default defineComponent({
   data() {
     return {
@@ -22,10 +25,62 @@ export default defineComponent({
           name: "Add",
           id: "add",
         },        {
-          name: "Browse",
+          name: "Browse/Install",
           id: "browse",
         },
       ],
+      browse: [{
+        name: "Samsung TV",
+        url: "/plugins/oh-plg-samsungtv-v1.0.0.tgz",
+        author: "Marc Stirner",
+        version: 1.0,
+        description: "",
+        intents: [
+          "ssdp",
+          "endpoints",
+          "devices"
+        ]
+      }, {
+        name: "Pioneer/Onky eISCP",
+        url: "",
+        author: "Marc Stirner",
+        version: 1.0,
+        description: "",
+        intents: [
+          "ssdp",
+          "endpoints",
+          "devices"
+        ]
+      }, {
+        name: "Custom Lowboard driver",
+        url: "",
+        author: "Marc Stirner",
+        version: 1.0,
+        description: "",
+        intents: []
+      }, {
+        name: "Phoscon/RaspBee ZigBee plugin",
+        url: "/plugins/oh-plg-phoscon-v1.0.0.tgz",
+        author: "Marc Stirner",
+        version: 1.0,
+        description: "",
+        intents: [
+          "ssdp",
+          "endpoints",
+          "devices"
+        ]
+      }].map((plg) => {
+        plg.description = `Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. 
+
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. 
+
+Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. 
+
+Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. 
+
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis. `;
+        return plg;
+      })
     };
   },
   computed: {
@@ -63,6 +118,107 @@ export default defineComponent({
         };
       });
     },
+    installPlugin({url, name, version, intents}){
+
+      console.log("Downmload url", url)
+
+      fetch(url, {
+        mode: 'no-cors',
+        redirect: 'follow'
+      }).then((resp) => {
+        console.log("download file resp", resp);
+        return resp.blob();
+      }).then(async (blob) => {
+
+        console.log("blob", blob)
+
+        // create plugin item
+        let data = await fetch("/api/plugins", {
+          method: "PUT",
+          headers: {
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({
+            name,
+            version,
+            intents
+          })
+        }).then((resp) => {
+          return resp.json();
+        });
+
+        /*
+        setNotification({
+          message: "Plugin item created",
+          type: "info",
+          showIcon: true,
+          dismiss: {
+            manually: true,
+            automatically: true,
+          },
+          showDurationProgress: true,
+          appearance: "dark",
+        });
+        */
+
+        console.log("Plugin item created", data)
+
+        // upload plugin content
+        await fetch(`/api/plugins/${data._id}/files`, {
+          method: "PUT",
+          headers: {
+            "x-md5-checksum": "foo-bar-bz"
+          },
+          body: blob
+        });
+
+        /*
+        setNotification({
+          message: "Plugin content upload created",
+          type: "info",
+          showIcon: true,
+          dismiss: {
+            manually: true,
+            automatically: true,
+          },
+          showDurationProgress: true,
+          appearance: "dark",
+        });
+        */
+
+        setNotification({
+          message: "Plugin installed successful!",
+          type: "success",
+          showIcon: true,
+          dismiss: {
+            manually: true,
+            automatically: true,
+          },
+          showDurationProgress: true,
+          appearance: "dark",
+        });
+
+      }).catch((err) => {
+        console.log("Could not downadsfasdfasdfasdfasfdload file", err)
+
+        setNotification({
+          message: "Something went wrong: " +err,
+          type: "alert",
+          showIcon: true,
+          dismiss: {
+            manually: true,
+            automatically: true,
+          },
+          showDurationProgress: true,
+          appearance: "dark",
+        });
+
+      });
+
+    },
+    downloadPlugin(plg){
+      window.open(plg.url)
+    }
   },
 });
 </script>
@@ -180,7 +336,59 @@ export default defineComponent({
         </table>
       </template>
       <template v-slot:add> Hello from apsdflkasjfdlasdf </template>
-      <template v-slot:browse> HTTP Browser for plugins </template>
+      <template v-slot:browse> 
+        <table class="table text-white">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Author</th>
+              <th scope="col">Version</th>
+              <th scope="col">Description</th>
+              <th scope="col">Intents</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-bind:key="index" v-for="(plugin, index) in browse">
+              <td>{{plugin.name}}</td>
+              <td>{{ plugin.author }}</td>
+              <td>{{ plugin.version }}</td>
+              <td>
+
+                <textarea v-bind:value="plugin.description" readonly="true" rows="5" class="w-100 text-white border-0" style="background-color: transparent; resize: none;">
+                </textarea>
+              </td>
+              <td>
+                <ul class="ps-3">
+                  <li v-bind:key="index" v-for="(intent, index) in plugin.intents">
+                    {{ intent }}
+                  </li>
+                </ul>
+              </td>
+              <td>
+                <div class="btn-group" role="group">
+                <button
+                      type="button"
+                      class="btn btn-outline-success"
+                      v-tooltip:bottom="'Install Plugin'"
+                      @click="installPlugin(plugin)"
+                    >
+                    <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      v-tooltip:bottom="'Download Plugin'"
+                      @click="downloadPlugin(plugin)"
+                    >
+                    <i class="fa-solid fa-download"></i>
+                    </button>
+                    </div>
+              </td>
+            </tr>
+           </tbody>
+          </table>
+      </template>
     </Tabs>
 
     <!--plugins: {{ plugins }}-->

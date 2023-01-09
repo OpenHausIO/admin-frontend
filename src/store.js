@@ -55,7 +55,7 @@ let itemWrapper = (item, component) => {
 
         })
 
-    }, 100);
+    }, 500);
 
     // with reactivitiy, vue browser extentions display nothing more...
     if (![

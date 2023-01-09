@@ -1,6 +1,8 @@
 <script setup>
 import store from "../store.js";
 
+import dateFormat from "dateformat";
+
 import Tabs from "@/components/Tabs.vue";
 import EditorProperty from "@/components/EditorProperty.vue";
 import ActionsButtons from "@/components/ActionsButtons.vue";
@@ -29,6 +31,11 @@ export default defineComponent({
     ssdp() {
       return store.state.ssdp;
     },
+    timestamps(item) {
+      return {
+        announced: dateFormat(item.timestamps.announced, "yyyy.mm.dd - HH:MM"),
+      };
+    },
   },
   methods: {
     handleEdit(item) {
@@ -56,6 +63,7 @@ export default defineComponent({
               <th scope="col">NT</th>
               <th scope="col">USN</th>
               <th scope="col">Headers</th>
+              <th scope="col">Timestamps</th>
               <th scope="col" style="width: 10px">Actions</th>
             </tr>
           </thead>
@@ -91,7 +99,43 @@ export default defineComponent({
                   </template>
                 </EditorProperty>
               </td>
-
+              <td>
+                <table>
+                  <tr>
+                    <td>Created:</td>
+                    <td>
+                      {{
+                        dateFormat(
+                          item.timestamps.created || 0,
+                          "yyyy.mm.dd - HH:MM"
+                        )
+                      }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Updated:</td>
+                    <td>
+                      {{
+                        dateFormat(
+                          item.timestamps.updated || 0,
+                          "yyyy.mm.dd - HH:MM"
+                        )
+                      }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Announced:</td>
+                    <td>
+                      {{
+                        dateFormat(
+                          item.timestamps.announced || 0,
+                          "yyyy.mm.dd - HH:MM"
+                        )
+                      }}
+                    </td>
+                  </tr>
+                </table>
+              </td>
               <td>
                 <ActionsButtons
                   :showEdit="true"

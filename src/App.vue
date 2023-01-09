@@ -104,7 +104,7 @@ export default {
 
   <div class="container-fluid">
     <div class="row">
-      <div class="col-2" style="border-right: 1px red solid !important">
+      <div class="col-2 border-end border-secondary" >
         <ul class="nav flex-column">
           <RouterLink
             custom
@@ -155,7 +155,7 @@ export default {
           </li>
 
           <RouterLink custom to="/logs" v-slot="{ href, navigate, isActive }">
-            <li class="nav-item">
+            <li class="nav-item hide">
               <a
                 class="nav-link"
                 aria-current="page"
@@ -169,7 +169,7 @@ export default {
             </li>
           </RouterLink>
 
-          <li class="nav-item">
+          <li class="nav-item hide">
             <a class="nav-link" href="#">
               <i class="fa-solid fa-gear"></i> Settings
             </a>
@@ -186,7 +186,7 @@ export default {
             to="/environment"
             v-slot="{ href, navigate, isActive }"
           >
-            <li class="nav-item">
+            <li class="nav-item hide">
               <a
                 class="nav-link"
                 aria-current="page"
@@ -200,11 +200,11 @@ export default {
             </li>
           </RouterLink>
 
-          <li class="nav-item">
+          <li class="nav-item hide">
             <hr />
           </li>
 
-          <li class="nav-item">
+          <li class="nav-item hide">
             <div class="form-check form-switch">
               <input
                 class="form-check-input"
@@ -251,6 +251,14 @@ body {
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.9); /* Black background with opacity */
   z-index: 9999; /* Specify a stack order in case you're using a different order for other elements */
+}
+
+a.nav-link{
+  color: rgba(var(--bs-black-rgb),var(--bs-text-opacity)) !important;
+}
+
+a.nav-link.active{
+  color: var(--bs-blue) !important;
 }
 
 #inner {

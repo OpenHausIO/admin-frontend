@@ -29,7 +29,7 @@ export default defineComponent({
 
 
 <template>
-  <div class="container-fluid">
+  <div class="container-fluid p-0">
     <!-- NAVIGATION ( nav-justified) -->
     <ul class="nav nav-tabs border-secondary">
       <li class="nav-item" v-bind:key="item.id" v-for="item in items">
@@ -44,7 +44,7 @@ export default defineComponent({
     </ul>
     <!-- NAVIGATION -->
     <!-- CONTENT -->
-    <div class="tab-content py-3" id="myTabContent">
+    <div class="tab-content" style="overflow-y: scroll !important">
       <div
         class="tab-pane fade"
         :class="{ 'active show': isActive(item.id) }"

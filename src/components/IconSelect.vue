@@ -19,7 +19,7 @@ export default defineComponent({
   },
   data() {
     return {
-      showPopup: false,
+      showPopup: true,
       newValue: "",
       icons: [],
       tabItems: [
@@ -106,7 +106,7 @@ export default defineComponent({
           <div class="modal-body m-0 p-0">
             <Tabs v-bind:items="tabItems">
               <!-- OVERVIEW -->
-              <template v-slot:fontawesome>
+              <template v-slot:fontawesome class="p-0">
                 <div class="row">
                   <div
                     class="col-2 text-center border"

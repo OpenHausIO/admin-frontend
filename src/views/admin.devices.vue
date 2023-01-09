@@ -94,7 +94,7 @@ export default defineComponent({
                 />
               </td>
               <td>
-                {{ item.meta || "" }}
+                {{ item.meta?.manufacturer }}
                 <!--
                 <EditorProperty
                   :enabled="item._id === editItem"
@@ -104,7 +104,7 @@ export default defineComponent({
                 />-->
               </td>
               <td>
-                {{ item.meta || "" }}
+                {{ item.meta?.model }}
                 <!--
                 <EditorProperty
                   :enabled="item._id === editItem"
@@ -114,7 +114,7 @@ export default defineComponent({
                 />-->
               </td>
               <td>
-                {{ item.meta || "" }}
+                {{ item.meta?.revision }}
                 <!--
                 <EditorProperty
                   :enabled="item._id === editItem"

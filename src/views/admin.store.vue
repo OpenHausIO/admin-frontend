@@ -39,6 +39,8 @@ export default defineComponent({
         this.editItem = item._id;
       }
     },
+    handleEdit() {},
+    handleInfo() {},
     handleRemove() {},
   },
 });
@@ -52,18 +54,34 @@ export default defineComponent({
         <table class="table text-white">
           <thead>
             <tr>
-              <th scope="col">#</th>
-              <th scope="col">Namespace (UUID)</th>
-              <th scope="col">Description</th>
-              <th scope="col">Key</th>
-              <th scope="col">Value</th>
+              <th scope="col">Config</th>
+              <th scope="col">Namespace (Item)</th>
               <th scope="col" style="width: 10px">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-bind:key="item._id" v-for="(item, index) in config">
-              <th scope="row">{{ index + 1 }}</th>
-              <td>{{ item.config }}</td>
+            <tr v-bind:key="item._id" v-for="item in config">
+              <td>
+                <!--{{ item }}-->
+
+                <ul class="ps-3">
+                  <li v-bind:key="index" v-for="(config, index) in item.config">
+                    {{ config.key }} = {{ config.value }}
+                  </li>
+                </ul>
+              </td>
+              <td>{{ item.namespace }} ({{ item.item }})</td>
+              <td>
+                <ActionsButtons
+                  :showEdit="true"
+                  :showInfo="true"
+                  :showRemove="true"
+                  :item="item"
+                  @handleEdit="handleEdit"
+                  @handleInfo="handleInfo"
+                  @handleRemove="handleRemove"
+                />
+              </td>
             </tr>
           </tbody>
         </table>

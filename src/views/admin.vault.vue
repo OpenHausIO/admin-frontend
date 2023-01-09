@@ -39,18 +39,14 @@ export default defineComponent({
           <thead>
             <tr>
               <th scope="col">#</th>
-              <th scope="col">Icon</th>
               <th scope="col">Name</th>
-              <th scope="col">Floor</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-bind:key="item._id" v-for="(item, index) in vault">
               <th scope="row">{{ index + 1 }}</th>
-              <td><i :class="item.icon"></i></td>
               <td>{{ item.name }}</td>
-              <td>{{ item.floor }}</td>
               <td>
                 <div class="btn-group" role="group">
                   <button

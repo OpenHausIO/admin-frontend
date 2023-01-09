@@ -21,6 +21,9 @@ export default defineComponent({
         {
           name: "Add",
           id: "add",
+        },        {
+          name: "Browse",
+          id: "browse",
         },
       ],
     };
@@ -177,6 +180,7 @@ export default defineComponent({
         </table>
       </template>
       <template v-slot:add> Hello from apsdflkasjfdlasdf </template>
+      <template v-slot:browse> HTTP Browser for plugins </template>
     </Tabs>
 
     <!--plugins: {{ plugins }}-->

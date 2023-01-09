@@ -39,6 +39,36 @@ npm run dev
 npm run build
 ```
 
+## Docker
+
+### Environment variables
+| Name             | Default value                    | Description                                          |
+| ---------------- | -------------------------------- | ---------------------------------------------------- |
+| NODE_ENV         | `production`                     | node.js environment                                  |
+| NGINX_PORT       | `3001`                           | nginx http port                                      |
+| NGINX_HOSTNAME   | `open-haus.lan, open-haus.local` | nginx hostname                                       |
+| BACKEND_PROTOCOL | `http`                           | OpenHaus backend http protocol                       |
+| BACKEND_HOST     | `127.0.0.1`                      | OpenHaus backend http host                           |
+| BACKEND_PORT     | `8080`                           | OpenHaus backend http port                           |
+| RESOLVER         | `127.0.0.11`                     | DNS resolver used inside the backend location block. |
+
+### Build
+```sh
+npm run build:docker
+```
+
+### Export the Image
+```sh
+docker save openhaus/admin-frontend:latest | gzip > ./admin-frontend-vX.X.X-docker.tgz
+```
+
+### Start a container
+```sh
+docker run --net=host --name=admin-frontend openhaus/admin-frontend:latest
+```
+The host network is neede when you run the backend on the docker host itself.<br />
+If you use the backend in a container or the "Quick-Start" docker example, its not needed.
+
 ## Description
 This is a User Interface for the HTTP backend API.<br />
 Its basicly a GUI for the [postman collection](https://github.com/OpenHausIO/backend/blob/dev/postman.json).

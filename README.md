@@ -39,6 +39,27 @@ npm run dev
 npm run build
 ```
 
+## Description
+This is a User Interface for the HTTP backend API.<br />
+Its basicly a GUI for the [postman collection](https://github.com/OpenHausIO/backend/blob/dev/postman.json).
+
+> The "Admin frontend" is a early work in progress project, that doesn't get the love it needs.
 
 ## Screenshots
-...
+![Dashboard](./docs/img/dashboard.png)
+--
+![Rooms](./docs/img/rooms.png)
+--
+![Devices](./docs/img/devices.png)
+--
+![Endpoints](./docs/img/endpoints.png)
+--
+![Plugins](./docs/img/plugins.png)
+--
+![Plugins](./docs/img/plugins-install.png)
+--
+![Users](./docs/img/users.png)
+--
+![Vault](./docs/img/vault.png)
+--
+![SSDP](./docs/img/ssdp.png)

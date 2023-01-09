@@ -23,10 +23,6 @@ export default defineComponent({
           name: "Add",
           id: "add",
         },
-        {
-          name: "Edit",
-          id: "edit",
-        },
       ],
       dynamicSlots: [],
       currentSort: "name",
@@ -184,9 +180,6 @@ export default defineComponent({
         </div>
       </template>
       <!-- ADD-->
-      <!-- EDIT -->
-      <template v-slot:edit> <div>Edot</div></template>
-      <!-- EDIT -->
       <!-- CUSTOM SLOTS -->
       <template
         v-for="slot in dynamicSlots"

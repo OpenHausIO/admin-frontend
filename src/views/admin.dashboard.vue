@@ -102,7 +102,7 @@ export default defineComponent({
     </div>
     <!-- QUCIK OVERVIEW -->
     <!-- SYSTEM USAGE -->
-    <div class="row mt-4">
+    <div class="row mt-4 hide">
       <!-- RESOURCES -->
       <div class="col-4">
         <div class="card bg-dark">
@@ -218,7 +218,7 @@ export default defineComponent({
     </div>
     <!-- SYSTEM USAGE -->
     <!-- MESSAGES -->
-    <div class="row mt-4">
+    <div class="row mt-4 hide">
       <div class="col-4">
         <div class="card bg-primary">
           <div class="card-body">

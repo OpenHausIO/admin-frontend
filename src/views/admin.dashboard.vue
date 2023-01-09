@@ -21,6 +21,18 @@ export default defineComponent({
     plugins() {
       return store.state.plugins;
     },
+    endpoints() {
+      return store.state.endpoints;
+    },
+    vaults() {
+      return store.state.vault;
+    },
+    stores() {
+      return store.state.store;
+    },
+    ssdps() {
+      return store.state.ssdp;
+    },
   },
 });
 </script>
@@ -99,6 +111,76 @@ export default defineComponent({
         </div>
       </div>
       <!-- PLUGINS -->
+      <!-- ENDPOINTS -->
+      <div class="col-3 pt-4">
+        <div class="card bg-dark">
+          <div class="card-body">
+            <div class="float-start">
+              <h3 class="text-black" style="--bs-text-opacity: 0.3">
+                ENDPOINTS
+              </h3>
+              <b>{{ endpoints.length }}</b>
+            </div>
+            <i
+              class="float-end fa-regular fa-lightbulb fa-4x text-black"
+              style="--bs-text-opacity: 0.3"
+            ></i>
+          </div>
+        </div>
+      </div>
+      <!-- ENDPOINTS -->
+      <!-- VAULTS -->
+      <div class="col-3 pt-4">
+        <div class="card bg-dark">
+          <div class="card-body">
+            <div class="float-start">
+              <h3 class="text-black" style="--bs-text-opacity: 0.3">VAULTS</h3>
+              <b>{{ vaults.length }}</b>
+            </div>
+            <i
+              class="float-end fa-solid fa-vault fa-4x text-black"
+              style="--bs-text-opacity: 0.3"
+            ></i>
+          </div>
+        </div>
+      </div>
+      <!-- VAULTS -->
+      <!-- STORE -->
+      <div class="col-3 pt-4">
+        <div class="card bg-dark">
+          <div class="card-body">
+            <div class="float-start">
+              <h3 class="text-black" style="--bs-text-opacity: 0.3">STORE</h3>
+              <b>{{ stores.length }}</b>
+            </div>
+            <i
+              class="float-end fa-solid fa-screwdriver-wrench fa-4x text-black"
+              style="--bs-text-opacity: 0.3"
+            ></i>
+          </div>
+        </div>
+      </div>
+      <!-- STORE -->
+      <!-- SSDP -->
+      <div class="col-3 pt-4">
+        <div class="card bg-dark">
+          <div class="card-body">
+            <div class="float-start">
+              <h3 class="text-black" style="--bs-text-opacity: 0.3">SSDP</h3>
+              <b>{{ ssdps.length }}</b>
+            </div>
+            <i
+              class="
+                float-end
+                fa-solid fa-arrow-right-arrow-left fa-4x
+                text-black
+              "
+              style="--bs-text-opacity: 0.3"
+            ></i>
+          </div>
+        </div>
+      </div>
+      <!-- SSDP -->
     </div>
     <!-- QUCIK OVERVIEW -->
     <!-- SYSTEM USAGE -->
@@ -247,6 +329,10 @@ export default defineComponent({
 
 .card {
   border-color: #000;
+}
+
+.card-body {
+  color: var(--bs-secondary) !important;
 }
 
 /*

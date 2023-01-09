@@ -53,7 +53,7 @@ export default defineComponent({
           <thead>
             <tr>
               <th scope="col">#</th>
-              <th scope="col">Plugin (Namespace UUID)</th>
+              <th scope="col">Namespace (UUID)</th>
               <th scope="col">Description</th>
               <th scope="col">Key</th>
               <th scope="col">Value</th>
@@ -63,41 +63,7 @@ export default defineComponent({
           <tbody>
             <tr v-bind:key="item._id" v-for="(item, index) in config">
               <th scope="row">{{ index + 1 }}</th>
-              <td>
-                {{
-                  getItemByProperty(store.state.plugins, item.namespace, "uuid")
-                    .name
-                }}
-                ({{ item.namespace }})
-              </td>
-              <td>
-                <EditorProperty
-                  :enabled="item._id === editItem"
-                  :object="item"
-                  prop="description"
-                  type="text"
-                />
-              </td>
-              <td>{{ item.key }}</td>
-              <td>
-                <!--{{ item.value }}-->
-
-                <EditorProperty
-                  :enabled="item._id === editItem"
-                  :object="item"
-                  prop="value"
-                  type="text"
-                />
-              </td>
-              <td>
-                <ActionsButtons
-                  :showEdit="true"
-                  :showRemove="true"
-                  :item="item"
-                  @handleEdit="handleEdit"
-                  @handleInfo="handleInfo"
-                />
-              </td>
+              <td>{{ item.config }}</td>
             </tr>
           </tbody>
         </table>

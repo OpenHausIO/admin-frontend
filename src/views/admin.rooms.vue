@@ -79,6 +79,7 @@ export default defineComponent({
               <th scope="col" style="width: 10px">Icon</th>
               <th scope="col" @click="sort('name')">Name</th>
               <th scope="col" @click="sort('floor')">Floor</th>
+              <th scope="col">Number</th>
               <th scope="col" style="width: 10px">Actions</th>
             </tr>
           </thead>
@@ -113,6 +114,15 @@ export default defineComponent({
                   :enabled="item._id === editItem"
                   :object="item"
                   prop="floor"
+                  type="number"
+                >
+                </EditorProperty>
+              </td>
+              <td>
+                <EditorProperty
+                  :enabled="item._id === editItem"
+                  :object="item"
+                  prop="number"
                   type="number"
                 >
                 </EditorProperty>

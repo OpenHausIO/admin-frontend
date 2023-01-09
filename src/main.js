@@ -33,7 +33,7 @@ if (![
 }
 
 
-app.directive('tooltip', (el, binding) => {
+app.directive("tooltip", (el, binding) => {
     return new Tooltip(el, {
         title: binding.value || "<i>no value</i>",
         placement: binding.arg || "bottom",

@@ -74,6 +74,10 @@ This is a User Interface for the HTTP backend API.<br />
 Its basicly a GUI for the [postman collection](https://github.com/OpenHausIO/backend/blob/dev/postman.json).
 
 > The "Admin frontend" is a early work in progress project, that doesn't get the love it needs.
+> Use Postman with the collection instead to access the full functionality. 
+
+- [Postman](https://www.postman.com/)
+- [Collection](https://raw.githubusercontent.com/OpenHausIO/backend/dev/postman.json)
 
 ## Screenshots
 ![Dashboard](./docs/img/dashboard.png)

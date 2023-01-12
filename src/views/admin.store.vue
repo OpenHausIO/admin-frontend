@@ -19,10 +19,10 @@ export default defineComponent({
                     name: "Overview",
                     id: "overview",
                 },
-                {
+                /*{
                     name: "Add",
                     id: "add",
-                },
+                },*/
             ],
         };
     },

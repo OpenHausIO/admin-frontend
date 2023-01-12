@@ -1,4 +1,5 @@
 const pkg = require("./package.json");
+const cp = require("child_process");
 
 module.exports = (grunt) => {
 
@@ -29,5 +30,16 @@ module.exports = (grunt) => {
 
     grunt.loadNpmTasks("grunt-contrib-compress");
     grunt.loadNpmTasks("grunt-env");
+
+    grunt.registerTask("release", () => {
+        [
+            "npm run build",
+            "npm run build:docker",
+            `docker save openhaus/admin-frontend:latest | gzip > ./admin-frontend-v${pkg.version}-docker.tgz`,
+            "grunt compress"
+        ].forEach((cmd) => {
+            cp.execSync(cmd);
+        });
+    });
 
 };

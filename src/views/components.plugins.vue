@@ -8,27 +8,18 @@ import ActionsButtons from "@/components/ActionsButtons.vue";
 
 <script>
 import { defineComponent } from "vue";
+import { request } from "../helper";
 
-import { useNotificationStore } from "@dafcoe/vue-notification";
-const { setNotification } = useNotificationStore();
+import JsonEditor from "@/components/JsonEditor.vue";
+import { addNotification } from "@/components/Notifications.vue";
 
 export default defineComponent({
+    components: {
+        JsonEditor
+    },
     data() {
         return {
             editItem: null,
-            tabItems: [
-                {
-                    name: "Overview",
-                    id: "overview",
-                },
-        /*{
-          name: "Add",
-          id: "add",
-        },*/    {
-                    name: "Browse/Install",
-                    id: "browse",
-                },
-            ],
             browse: [{
                 name: "Samsung TV",
                 url: "/plugins/oh-plg-samsungtv-v1.0.0.tgz",
@@ -80,13 +71,35 @@ Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming 
 
 Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis. `;
                 return plg;
-            })
+            }),
+            enabledEditFields: false,
+            json: null
         };
     },
     computed: {
         plugins() {
             return store.state.plugins;
         },
+        tabItems() {
+
+            let items = [{
+                name: "Overview",
+                id: "overview",
+            }, {
+                name: "Browse/Install",
+                id: "browse"
+            }];
+
+            if (store.settings.expertSettings) {
+                items.splice(1, 0, {
+                    name: "Add",
+                    id: "add",
+                });
+            }
+
+            return items;
+
+        }
     },
     methods: {
         handleEdit(item) {
@@ -99,8 +112,33 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
         handleRemove() { },
         handleInfo() { },
         showInfo() { },
-        handleStart() { },
+        handleStart(item) {
+
+            request(`/api/plugins/${item._id}/start`, {
+                method: "POST",
+            }, (err) => {
+                if (err || item.error) {
+
+                    addNotification(`Error: ${err || item.error}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Plugin "${item.name}" started`, {
+                        type: "success"
+                    });
+
+                }
+            });
+
+        },
         handleStop() { },
+        handleRestart() { },
+        handleJson(item) {
+            this.json = item;
+        },
         createIntentsArray(item) {
             return [
                 "devices",
@@ -117,6 +155,21 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                     value: intent,
                 };
             });
+        },
+        fetchPlugins() {
+
+            fetch(`https://plugins.open-haus.io/`, {
+                mode: "no-cors",
+                redirect: 'follow'
+            }).then((resp) => {
+                console.log(resp);
+                return resp.json();
+            }).then((data) => {
+                this.browse = data;
+            }).catch((err) => {
+                console.warn("Could not fetch plugin list: " + err);
+            });
+
         },
         installPlugin({ url, name, version, intents }) {
 
@@ -148,7 +201,7 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                 });
 
                 /*
-                setNotification({
+                addNotification({
                   message: "Plugin item created",
                   type: "info",
                   showIcon: true,
@@ -173,7 +226,7 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                 });
 
                 /*
-                setNotification({
+                addNotification({
                   message: "Plugin content upload created",
                   type: "info",
                   showIcon: true,
@@ -186,31 +239,16 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                 });
                 */
 
-                setNotification({
-                    message: "Plugin installed successful!",
-                    type: "success",
-                    showIcon: true,
-                    dismiss: {
-                        manually: true,
-                        automatically: true,
-                    },
-                    showDurationProgress: true,
-                    appearance: "dark",
+                addNotification(`Plugin "${data.name}" installed`, {
+                    type: "success"
                 });
 
             }).catch((err) => {
                 console.log("Could not downadsfasdfasdfasdfasfdload file", err)
 
-                setNotification({
-                    message: "Something went wrong: " + err,
-                    type: "alert",
-                    showIcon: true,
-                    dismiss: {
-                        manually: true,
-                        automatically: true,
-                    },
-                    showDurationProgress: true,
-                    appearance: "dark",
+                addNotification(`Error: ${err}`, {
+                    type: "danger",
+                    dismiss: false
                 });
 
             });
@@ -218,15 +256,54 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
         },
         downloadPlugin(plg) {
             window.open(plg.url)
+        },
+        onClose() {
+            this.json = null;
+        },
+        onConfirm(data) {
+
+            request(`/api/plugins/${data._id}`, {
+                method: "PATCH",
+                headers: {
+                    "content-type": "application/json"
+                },
+                body: JSON.stringify(data)
+            }, (err) => {
+                if (err || data.error) {
+
+                    addNotification(`Error: ${err || data.error}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Plugin item "${data.name}" updated`, {
+                        type: "success"
+                    });
+
+                }
+            });
+
+            this.json = null;
+
         }
     },
+    mounted() {
+        this.fetchPlugins();
+    }
 });
 </script>
 
 
 <template>
     <div>
+
+        <JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
+
         <Tabs v-bind:items="tabItems">
+
+            <!-- OVERVIEW-->
             <template v-slot:overview>
                 <table class="table text-white">
                     <thead>
@@ -246,9 +323,22 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                     <tbody>
                         <tr v-bind:key="item._id" v-for="(item, index) in plugins">
                             <th scope="row">{{ index + 1 }}</th>
-                            <td>{{ item.name }}</td>
-                            <td>v{{ item.version }}</td>
-                            <td>{{ item.uuid }}</td>
+                            <td>
+                                <EditorProperty
+                                    :enabled="item._id === editItem && store.settings.expertSettings && enabledEditFields"
+                                    :object="item" prop="name" type="text" />
+                            </td>
+                            <td>
+                                <EditorProperty
+                                    :enabled="item._id === editItem && store.settings.expertSettings && enabledEditFields"
+                                    :object="item" prop="version" type="text" />
+                            </td>
+                            <td>
+
+                                <EditorProperty
+                                    :enabled="item._id === editItem && store.settings.expertSettings && enabledEditFields"
+                                    :object="item" prop="uuid" type="text" />
+                            </td>
                             <td>
                                 <EditorProperty :enabled="item._id === editItem" :object="item" prop="intents"
                                     type="checkbox" :items="createIntentsArray(item)">
@@ -275,7 +365,8 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                             </td>
                             <td>
                                 <ActionsButtons :showEdit="true" :showRemove="true" :showInfo="true" :item="item"
-                                    @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove">
+                                    @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
+                                    @handleJson="handleJson">
                                     <template v-slot:custom>
                                         <button type="button" class="btn btn-outline-success" :disabled="!item.enabled"
                                             v-on:click="handleStart(item)" :class="{
@@ -284,12 +375,19 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                                             }" v-tooltip:bottom="'Start Plugin'">
                                             <i class="fa-solid fa-power-off"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger" :disabled="!item.enabled"
-                                            v-on:click="handleStop(item)" :class="{
+                                        <button type="button" class="btn btn-outline-danger hide"
+                                            :disabled="!item.enabled" v-on:click="handleStop(item)" :class="{
                                                 'text-muted': !item.enabled,
                                                 'border-secondary': !item.enabled,
                                             }" v-tooltip:bottom="'Stop Plugin'">
                                             <i class="fa-solid fa-power-off"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning hide"
+                                            :disabled="!item.enabled" v-on:click="handleRestart(item)" :class="{
+                                                'text-muted': !item.enabled,
+                                                'border-secondary': !item.enabled,
+                                            }" v-tooltip:bottom="'Restart Plugin'">
+                                            <i class="fa-solid fa-arrow-rotate-right"></i>
                                         </button>
                                     </template>
                                 </ActionsButtons>
@@ -298,7 +396,43 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                     </tbody>
                 </table>
             </template>
-            <template v-slot:add> Hello from apsdflkasjfdlasdf </template>
+            <!-- OVERVIEW-->
+
+            <!-- ADD -->
+            <template v-slot:add>
+
+                <div>
+                    <div class="row">
+                        <div class="col-6">
+                            <form @submit.prevent="addItem">
+                                <div class="form-group mb-2">
+                                    <label>Name</label>
+                                    <input type="text" name="name" class="form-control bg-dark text-white" />
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label>Version</label>
+                                    <input type="number" name="version" class="form-control bg-dark text-white" />
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label>UUID</label>
+                                    <input type="number" name="uuid" class="form-control bg-dark text-white" />
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label>Intents</label>
+                                    <input type="text" name="icon" class="form-control bg-dark text-white"
+                                        value="fa-regular fa-lightbulb" />
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary">
+                                    Save
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <!-- ADD -->
+
+            <!-- BROWSE/INSTALL-->
             <template v-slot:browse>
                 <table class="table text-white">
                     <thead>
@@ -340,18 +474,19 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                                         v-tooltip:bottom="'Download Plugin'" @click="downloadPlugin(plugin)">
                                         <i class="fa-solid fa-download"></i>
                                     </button>
+
                                 </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </template>
+            <!-- BROWSE/INSTALL-->
+
         </Tabs>
 
         <!--plugins: {{ plugins }}-->
     </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

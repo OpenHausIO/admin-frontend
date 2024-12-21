@@ -1,20 +1,24 @@
-<script setup>
-import store from "../store.js";
-
-import Tabs from "@/components/Tabs.vue";
-import EditorProperty from "@/components/EditorProperty.vue";
-import ActionsButtons from "@/components/ActionsButtons.vue";
-import IconSelect from "@/components/IconSelect.vue";
-</script>
-
 <script>
 import { defineComponent } from "vue";
-import { request } from "../helper";
+import store from "../store.js";
 
-import { useNotificationStore } from '@dafcoe/vue-notification';
-const { setNotification } = useNotificationStore();
+import ActionsButtons from "@/components/ActionsButtons.vue";
+import EditorProperty from "@/components/EditorProperty.vue";
+import IconSelect from "@/components/IconSelect.vue";
+import Tabs from "@/components/Tabs.vue";
+import JsonEditor from "@/components/JsonEditor.vue";
+
+import { request } from "../helper";
+import { addNotification } from "@/components/Notifications.vue";
 
 export default defineComponent({
+    components: {
+        ActionsButtons,
+        EditorProperty,
+        IconSelect,
+        JsonEditor,
+        Tabs
+    },
     data() {
         return {
             editItem: null,
@@ -28,6 +32,7 @@ export default defineComponent({
             dynamicSlots: [],
             currentSort: "name",
             currentSortDir: "asc",
+            json: null
         };
     },
     methods: {
@@ -45,32 +50,15 @@ export default defineComponent({
             }, (err, data) => {
                 if (err || data.error) {
 
-                    console.error("Could not remove room", err || data.error);
-
-                    setNotification({
-                        "message": `Error: ${err || data.error}`,
-                        "type": "alert",
-                        "showIcon": true,
-                        "dismiss": {
-                            "manually": true,
-                            "automatically": true
-                        },
-                        "showDurationProgress": true,
-                        "appearance": "dark"
+                    addNotification(`Error: ${err || data.error}`, {
+                        type: "danger",
+                        dismiss: false
                     });
 
                 } else {
 
-                    setNotification({
-                        "message": `Room "${data.name}" removed`,
-                        "type": "success",
-                        "showIcon": true,
-                        "dismiss": {
-                            "manually": true,
-                            "automatically": true
-                        },
-                        "showDurationProgress": true,
-                        "appearance": "dark"
+                    addNotification(`Room "${data.name}" added`, {
+                        type: "success"
                     });
 
                 }
@@ -108,30 +96,15 @@ export default defineComponent({
 
                     console.error("Could not add room", err || data.error);
 
-                    setNotification({
-                        "message": `Error: ${err || data.error}`,
-                        "type": "alert",
-                        "showIcon": true,
-                        "dismiss": {
-                            "manually": true,
-                            "automatically": true
-                        },
-                        "showDurationProgress": true,
-                        "appearance": "dark"
+                    addNotification(`Error: ${err || data.error}`, {
+                        type: "danger",
+                        dismiss: false
                     });
 
                 } else {
 
-                    setNotification({
-                        "message": `Room "${data.name}" added`,
-                        "type": "success",
-                        "showIcon": true,
-                        "dismiss": {
-                            "manually": true,
-                            "automatically": true
-                        },
-                        "showDurationProgress": true,
-                        "appearance": "dark"
+                    addNotification(`Room "${data.name}" added`, {
+                        type: "success"
                     });
 
                     name.value = "";
@@ -141,6 +114,42 @@ export default defineComponent({
 
                 }
             });
+
+        },
+        handleJson(item) {
+            this.json = item;
+        },
+        onClose() {
+            this.json = null;
+            this.editItem = null;
+        },
+        onConfirm(data) {
+
+            request(`/api/rooms/${data._id}`, {
+                method: "PATCH",
+                headers: {
+                    "content-type": "application/json"
+                },
+                body: JSON.stringify(data)
+            }, (err) => {
+                if (err || data.error) {
+
+                    addNotification(`Error: ${err || data.error}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Room item "${data.name}" updated`, {
+                        type: "success"
+                    });
+
+                }
+            });
+
+            this.json = null;
+            this.editItem = null;
 
         }
     },
@@ -165,6 +174,9 @@ export default defineComponent({
 
 <template>
     <div>
+
+        <JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
+
         <Tabs v-bind:items="tabItems">
             <!-- OVERVIEW -->
             <template v-slot:overview>
@@ -173,14 +185,20 @@ export default defineComponent({
                         <tr>
                             <th scope="col" style="width: 10px">#</th>
                             <th scope="col" style="width: 10px">Icon</th>
-                            <th scope="col" @click="sort('name')">Name</th>
-                            <th scope="col" @click="sort('floor')">Floor</th>
+                            <th scope="col" @click="sort('name')" style="cursor: pointer;">
+                                Name
+                                <i class="fa-solid fa-filter" style="font-size: 10px"></i>
+                            </th>
+                            <th scope="col" @click="sort('floor')" style="cursor: pointer;">
+                                Floor
+                                <i class="fa-solid fa-filter" style="font-size: 10px"></i>
+                            </th>
                             <th scope="col">Number</th>
                             <th scope="col" style="width: 10px">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in rooms">
+                        <tr v-bind:key="item._id" v-for="(item, index) in sortedItems">
                             <th scope="row">{{ index + 1 }}</th>
                             <td>
                                 <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon" type="text">
@@ -207,7 +225,7 @@ export default defineComponent({
                             <td>
                                 <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
                                     @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
-                                    @handleClone="handleClone" />
+                                    @handleJson="handleJson" />
                             </td>
                         </tr>
                     </tbody>

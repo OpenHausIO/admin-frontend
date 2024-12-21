@@ -1,5 +1,6 @@
 <script>
 import { defineComponent } from "vue";
+import store from "../store.js";
 
 export default defineComponent({
     props: {
@@ -16,7 +17,7 @@ export default defineComponent({
             type: Boolean,
         },
         showRemove: {
-            default: false,
+            default: true,
             type: Boolean,
         },
         item: {
@@ -25,9 +26,7 @@ export default defineComponent({
         },
     },
     data() {
-        return {
-            itemData: this.item,
-        };
+        return {};
     },
     methods: {
         handleEdit() {
@@ -42,7 +41,19 @@ export default defineComponent({
         handleRemove() {
             this.$emit("handleRemove", this.item);
         },
+        handleJson(item) {
+            this.$emit("handleJson", item);
+        }
     },
+    emits: [
+        "handleEdit", "handleInfo", "handleClone",
+        "handleRemove", "handleRemove", "handleJson"
+    ],
+    computed: {
+        settings() {
+            return store.settings;
+        }
+    }
 });
 </script>
 
@@ -54,18 +65,23 @@ export default defineComponent({
             v-tooltip:bottom="'Edit Item'">
             <i class="fa-solid fa-pen-to-square"></i>
         </button>
-        <button type="button" class="btn btn-outline-info" v-if="false" v-on:click="handleInfo(item)"
+        <button type="button" class="btn btn-outline-info hide" v-if="showInfo" v-on:click="handleInfo(item)"
             v-tooltip:bottom="'View Info'">
             <i class="fa-solid fa-circle-info"></i>
         </button>
-        <button type="button" class="btn btn-outline-secondary" v-if="false" v-on:click="handleClone(item)"
+        <button type="button" class="btn btn-outline-secondary" v-if="showClone" v-on:click="handleClone(item)"
             v-tooltip:bottom="'Clone Item'">
             <i class="fa-regular fa-clone"></i>
         </button>
 
-        <!--<slot name="custom"></slot>-->
+        <button type="button" class="btn btn-outline-secondary" v-if="settings.expertSettings"
+            v-on:click="handleJson(item)" v-tooltip:bottom="'Edit JSON'">
+            <i class="fa-solid fa-code"></i>
+        </button>
 
-        <button type="button" class="btn btn-outline-danger" v-if="false" v-on:click="handleRemove(item)"
+        <slot name="custom"></slot>
+
+        <button type="button" class="btn btn-outline-danger" v-if="showRemove" v-on:click="handleRemove(item)"
             v-tooltip:bottom="'Delete Item'">
             <i class="fa-solid fa-trash-can"></i>
         </button>

@@ -1,9 +1,7 @@
 import { reactive } from 'vue'
 import { debounce, request } from "./helper.js";
 
-import { useNotificationStore } from '@dafcoe/vue-notification'
-
-const { setNotification } = useNotificationStore()
+import { addNotification } from "@/components/Notifications.vue";
 
 // https://stackoverflow.com/a/35610685/5781499
 // https://github.com/OpenHausIO/backend/blob/e0e3c119a04e3adb81f58425d6ff727974bdc18f/system/component/class.component.js#L51
@@ -23,32 +21,15 @@ let itemWrapper = (item, component) => {
 
             if (result.error || err) {
 
-                setNotification({
-                    "message": `Could not update item "${item._id}" in component "${component}": ${err || result.error}`,
-                    "type": "alert",
-                    "showIcon": true,
-                    "dismiss": {
-                        "manually": true,
-                        "automatically": false
-                    },
-                    "duration": 5000,
-                    "showDurationProgress": true,
-                    "appearance": "light"
+                addNotification(`Could not update item "${item._id}" in component "${component}": ${err || result.error}`, {
+                    type: "danger",
+                    dismiss: false
                 });
 
             } else {
 
-                setNotification({
-                    "message": `Item "${item._id}" in component "${component}" updated`,
-                    "type": "success",
-                    "showIcon": true,
-                    "dismiss": {
-                        "manually": true,
-                        "automatically": true
-                    },
-                    "duration": 2000,
-                    "showDurationProgress": true,
-                    "appearance": "light"
+                addNotification(`Item "${item._id}" in component "${component}" updated`, {
+                    type: "success"
                 });
 
             }
@@ -118,13 +99,29 @@ const state = {
     plugins: handle([], "plugins"),
     vault: handle([], "vault"),
     store: handle([], "store"),
-    ssdp: handle([], "ssdp")
+    ssdp: handle([], "ssdp"),
+    mdns: handle([], "mdns"),
+    mqtt: handle([], "mqtt"),
+    webhooks: handle([], "webhooks"),
+    scenes: handle([], "scenes")
 };
+
+
+const settings = reactive({
+    dateformat: "yyyy.mm.dd - HH:MM",
+    expertSettings: false
+});
+
+if (window.localStorage.getItem("expertSettings")) {
+    console.warn("expertSettings", window.localStorage.getItem("expertSettings"));
+    settings.expertSettings = window.localStorage.getItem("expertSettings") === "true";
+}
 
 window.state = state;
 
 export default {
-    state
+    state,
+    settings
 }
 
 

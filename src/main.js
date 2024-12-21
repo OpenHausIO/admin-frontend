@@ -62,9 +62,22 @@ Promise.all([
         console.log(window.location.host)
 
         let controller = new AbortController();
-        let id = setTimeout(() => controller.abort(), 1000);
+        let id = setTimeout(() => controller.abort(), 3000);
 
-        let ws = new WebSocket(`ws://${window.location.host}/api/events`);
+        let url = window.location.protocol === "https:" ? "wss://" : "ws://";
+        url += `${window.location.host}/api/events`;
+
+        let events = ["add", "update", "remove"].map((intent) => {
+            return `events[]=${intent}`;
+        }).join("&");
+
+        /*
+        let components = ["rooms", "scenes", "devices", "endpoints"].map((intent) => {
+            return `components[]=${intent}`;
+        }).join("&");
+        */
+
+        let ws = new WebSocket(`${url}?${events}&x-auth-token=${localStorage.getItem("x-auth-token")}`);
 
         console.log("connect to", ws.url);
 
@@ -113,6 +126,10 @@ Promise.all([
             request("/api/vault"),
             request("/api/store"),
             request("/api/ssdp"),
+            request("/api/mdns"),
+            request("/api/mqtt"),
+            request("/api/webhooks"),
+            request("/api/scenes"),
         ]).then(([
             rooms,
             endpoints,
@@ -121,7 +138,11 @@ Promise.all([
             users,
             vault,
             config, // config = store component
-            ssdp
+            ssdp,
+            mdns,
+            mqtt,
+            webhooks,
+            scenes
         ]) => {
 
 
@@ -133,6 +154,11 @@ Promise.all([
             vault.forEach(item => store.state.vault.push(item));
             config.forEach(item => store.state.store.push(item));
             ssdp.forEach(item => store.state.ssdp.push(item));
+
+            mdns.forEach(item => store.state.mdns.push(item));
+            mqtt.forEach(item => store.state.mqtt.push(item));
+            webhooks.forEach(item => store.state.webhooks.push(item));
+            scenes.forEach(item => store.state.scenes.push(item));
 
 
             console.log("[pre] api resrouces fetched");

@@ -1,16 +1,26 @@
 <script setup>
-import store from "../store.js";
 import { getItemByProperty } from "../helper.js";
-
-import Tabs from "@/components/Tabs.vue";
-import EditorProperty from "@/components/EditorProperty.vue";
-import ActionsButtons from "@/components/ActionsButtons.vue";
 </script>
 
 <script>
 import { defineComponent } from "vue";
+import store from "../store.js";
+
+import ActionsButtons from "@/components/ActionsButtons.vue";
+import EditorProperty from "@/components/EditorProperty.vue";
+import Tabs from "@/components/Tabs.vue";
+import JsonEditor from "@/components/JsonEditor.vue";
+
+import { request } from "../helper";
+import { addNotification } from "@/components/Notifications.vue";
 
 export default defineComponent({
+    components: {
+        ActionsButtons,
+        EditorProperty,
+        JsonEditor,
+        Tabs
+    },
     data() {
         return {
             editItem: null,
@@ -24,6 +34,7 @@ export default defineComponent({
                     id: "add",
                 },*/
             ],
+            json: null
         };
     },
     computed: {
@@ -41,6 +52,42 @@ export default defineComponent({
         },
         handleInfo() { },
         handleRemove() { },
+        handleJson(item) {
+            this.json = item;
+        },
+        onClose() {
+            this.json = null;
+            this.editItem = null;
+        },
+        onConfirm(data) {
+
+            request(`/api/store/${data._id}`, {
+                method: "PATCH",
+                headers: {
+                    "content-type": "application/json"
+                },
+                body: JSON.stringify(data)
+            }, (err) => {
+                if (err || data.error) {
+
+                    addNotification(`Error: ${err || data.error}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Store item "${data.name}" updated`, {
+                        type: "success"
+                    });
+
+                }
+            });
+
+            this.json = null;
+            this.editItem = null;
+
+        }
     },
 });
 </script>
@@ -48,6 +95,9 @@ export default defineComponent({
 
 <template>
     <div>
+
+        <JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
+
         <Tabs v-bind:items="tabItems">
             <template v-slot:overview>
                 <table class="table text-white">
@@ -62,7 +112,9 @@ export default defineComponent({
                         <tr v-bind:key="item._id" v-for="item in config">
                             <td>
 
-                                <table class="table text-white">
+                                {{ item }}
+
+                                <table class="">
                                     <thead>
                                         <tr>
                                             <th scope="col">Key</th>
@@ -89,7 +141,8 @@ export default defineComponent({
                             <td>{{ item.namespace }} ({{ item.item }})</td>
                             <td>
                                 <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove" />
+                                    @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
+                                    @handleJson="handleJson" />
                             </td>
                         </tr>
                     </tbody>

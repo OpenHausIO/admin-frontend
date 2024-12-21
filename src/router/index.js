@@ -1,79 +1,109 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 import { request } from "../helper.js";
 
-const routes = [{
+const components = [{
     path: "/rooms",
     name: "Rooms",
     icon: "fa-solid fa-door-open",
-    component: () => import("../views/admin.rooms.vue")
+    component: () => import("../views/components.rooms.vue")
 }, {
     path: "/devices",
     name: "Devices",
     icon: "fa-solid fa-tv",
-    component: () => import("../views/admin.devices.vue")
+    component: () => import("../views/components.devices.vue")
 }, {
     path: "/endpoints",
     name: "Endpoints",
     icon: "fa-regular fa-lightbulb",
-    component: () => import("../views/admin.endpoints.vue")
+    component: () => import("../views/components.endpoints.vue")
 }, {
     path: "/plugins",
     name: "Plugins",
     icon: "fa-solid fa-puzzle-piece",
-    component: () => import("../views/admin.plugins.vue")
+    component: () => import("../views/components.plugins.vue")
 }, {
     path: "/users",
     name: "Users",
     icon: "fa-solid fa-user",
-    component: () => import("../views/admin.users.vue")
+    component: () => import("../views/components.users.vue")
 }, {
     path: "/vault",
     name: "Vault",
     icon: "fa-solid fa-vault",
-    component: () => import("../views/admin.vault.vue")
+    component: () => import("../views/components.vault.vue")
 }, {
     path: "/store",
     name: "Store",
     icon: "fa-solid fa-screwdriver-wrench",
-    component: () => import("../views/admin.store.vue")
+    component: () => import("../views/components.store.vue")
 }, {
     path: "/ssdp",
     name: "SSDP",
     icon: "fa-solid fa-arrow-right-arrow-left",
-    component: () => import("../views/admin.ssdp.vue")
+    component: () => import("../views/components.ssdp.vue")
+}, {
+    path: "/mdns",
+    name: "MDNS",
+    icon: "fa-solid fa-reply-all",
+    component: () => import("../views/components.mdns.vue")
+}, {
+    path: "/mqtt",
+    name: "MQTT",
+    icon: "fa-solid fa-file-pen",
+    component: () => import("../views/components.mqtt.vue")
+}, {
+    path: "/webhooks",
+    name: "Webhooks",
+    icon: "fa-solid fa-anchor",
+    component: () => import("../views/components.webhooks.vue")
+}, {
+    path: "/scenes",
+    name: "Scenes",
+    icon: "fa-solid fa-clone",
+    component: () => import("../views/components.scenes.vue")
 }];
+
+
+const system = [{
+    path: "/system/backup",
+    name: "Backup",
+    icon: "fa-solid fa-file-zipper",
+    component: () => import("../views/system.backup.vue")
+}, {
+    path: "/system/logfiles",
+    name: "Logfiles",
+    icon: "fa-solid fa-file",
+    component: () => import("../views/system.logfiles.vue")
+}/*, {
+    path: "/system/information",
+    name: "Information",
+    icon: "fa-solid fa-circle-info",
+    component: () => import("../views/system.information.vue")
+}*/];
 
 
 const router = createRouter({
     history: createWebHashHistory(),
-    routes: [
-        {
-            path: "/dashboard",
-            name: "Dasboard",
-            component: () => import("../views/admin.dashboard.vue")
-        },
-        {
-            path: "/logs",
-            name: "Logfiles",
-            component: () => import("../views/admin.logfiles.vue")
-        },
-        {
-            path: "/environment",
-            name: "Environment",
-            component: () => import("../views/admin.environment.vue")
-        },
-        {
-            path: "/",
-            name: "Login",
-            component: () => import("../views/login.vue")
-        },
-        ...routes,
-        {
-            path: "/:pathMatch(.*)*",
-            name: "NotFound",
-            redirect: "/dashboard"
-        }
-    ]
+    routes: [{
+        path: "/dashboard",
+        name: "Dasboard",
+        component: () => import("../views/dashboard.vue")
+    }, {
+        path: "/",
+        name: "Login",
+        component: () => import("../views/auth.login.vue")
+    }, {
+        path: "/auth/login",
+        name: "Login",
+        component: () => import("../views/auth.login.vue")
+    },
+    ...components,
+    ...system,
+    {
+        path: "/:pathMatch(.*)*",
+        name: "NotFound",
+        redirect: "/dashboard"
+    }]
 });
 
 router.beforeEach((to, from, next) => {
@@ -158,5 +188,6 @@ export default router;
 
 export {
     router,
-    routes
+    components,
+    system
 };

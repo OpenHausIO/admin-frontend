@@ -1,18 +1,28 @@
 <script setup>
-import store from "../store.js";
-
 import { getItemById } from "../helper.js";
-
-import Tabs from "@/components/Tabs.vue";
-import EditorProperty from "@/components/EditorProperty.vue";
-import ActionsButtons from "@/components/ActionsButtons.vue";
-import IconSelect from "@/components/IconSelect.vue";
 </script>
 
 <script>
 import { defineComponent } from "vue";
+import store from "../store.js";
+
+import ActionsButtons from "@/components/ActionsButtons.vue";
+import EditorProperty from "@/components/EditorProperty.vue";
+import IconSelect from "@/components/IconSelect.vue";
+import Tabs from "@/components/Tabs.vue";
+import JsonEditor from "@/components/JsonEditor.vue";
+
+import { request } from "../helper";
+import { addNotification } from "@/components/Notifications.vue";
 
 export default defineComponent({
+    components: {
+        IconSelect,
+        ActionsButtons,
+        EditorProperty,
+        JsonEditor,
+        Tabs
+    },
     data() {
         return {
             editItem: null,
@@ -26,11 +36,12 @@ export default defineComponent({
                   id: "add",
                 },*/
             ],
+            json: null
         };
     },
     computed: {
-        devices() {
-            return store.state.devices;
+        endpoints() {
+            return store.state.endpoints;
         },
     },
     methods: {
@@ -44,6 +55,42 @@ export default defineComponent({
         handleInfo() { },
         handleRemove() { },
         handleClone() { },
+        handleJson(item) {
+            this.json = item;
+        },
+        onClose() {
+            this.json = null;
+            this.editItem = null;
+        },
+        onConfirm(data) {
+
+            request(`/api/endpoints/${data._id}`, {
+                method: "PATCH",
+                headers: {
+                    "content-type": "application/json"
+                },
+                body: JSON.stringify(data)
+            }, (err) => {
+                if (err || data.error) {
+
+                    addNotification(`Error: ${err || data.error}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Endpoint item "${data.name}" updated`, {
+                        type: "success"
+                    });
+
+                }
+            });
+
+            this.json = null;
+            this.editItem = null;
+
+        }
     },
 });
 </script>
@@ -51,6 +98,9 @@ export default defineComponent({
 
 <template>
     <div>
+
+        <JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
+
         <Tabs v-bind:items="tabItems">
             <template v-slot:overview>
                 <table class="table text-white">
@@ -59,16 +109,14 @@ export default defineComponent({
                             <th scope="col" style="width: 10px">#</th>
                             <th scope="col" style="width: 10px">Icon</th>
                             <th scope="col">Name</th>
-                            <th scope="col">Manufacturer</th>
-                            <th scope="col">Model</th>
-                            <th scope="col">Revision</th>
+                            <th scope="col">Device</th>
                             <th scope="col">Room</th>
                             <th scope="col" style="width: 10px">Enabled</th>
                             <th scope="col" style="width: 10px">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in devices">
+                        <tr v-bind:key="item._id" v-for="(item, index) in endpoints">
                             <th scope="row">{{ index + 1 }}</th>
                             <td>
                                 <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon" type="text">
@@ -85,34 +133,12 @@ export default defineComponent({
                                     type="text" />
                             </td>
                             <td>
-                                {{ item.meta?.manufacturer }}
-                                <!--
-                <EditorProperty
-                  :enabled="item._id === editItem"
-                  :object="item.meta"
-                  prop="manufacturer"
-                  type="text"
-                />-->
-                            </td>
-                            <td>
-                                {{ item.meta?.model }}
-                                <!--
-                <EditorProperty
-                  :enabled="item._id === editItem"
-                  :object="item.meta"
-                  prop="manufacturer"
-                  type="text"
-                />-->
-                            </td>
-                            <td>
-                                {{ item.meta?.revision }}
-                                <!--
-                <EditorProperty
-                  :enabled="item._id === editItem"
-                  :object="item.meta"
-                  prop="manufacturer"
-                  type="text"
-                />-->
+                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="device"
+                                    type="select" :items="store.state.devices">
+                                    <template v-slot:display="{ value }">
+                                        {{ getItemById(store.state.devices, value)?.name || "" }}
+                                    </template>
+                                </EditorProperty>
                             </td>
                             <td>
                                 <EditorProperty :enabled="item._id === editItem" :object="item" prop="room"
@@ -130,7 +156,7 @@ export default defineComponent({
                             </td>
                             <td>
                                 <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleInfo="handleInfo" @handleClone="handleClone" />
+                                    @handleEdit="handleEdit" @handleInfo="handleInfo" @handleJson="handleJson" />
                             </td>
                         </tr>
                     </tbody>

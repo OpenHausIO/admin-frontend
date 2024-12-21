@@ -1,234 +1,209 @@
 <script setup>
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap";
-import { routes, router } from "./router/index.js";
+import { router, components, system } from "./router/index.js";
 
 import "@dafcoe/vue-notification/dist/vue-notification.css";
 </script>
 
 <script>
-import { useNotificationStore } from "@dafcoe/vue-notification";
+import store from "./store.js";
+import Card from "@/components/Card.vue";
+import Notifications, { addNotification } from "@/components/Notifications.vue";
 
-const { setNotification } = useNotificationStore();
 export default {
-  data() {
-    return {
-      overlay: false,
-      authToken: window.localStorage.getItem("x-auth-token"),
-    };
-  },
-  computed: {
-    expertSettingsCheckbox: {
-      get() {
-        if (window.localStorage.getItem("expertSettings")) {
-          return Boolean(window.localStorage.getItem("expertSettings"));
-        }
-
-        return false;
-      },
-      set(val) {
-        let message = "Expert settings disabled!";
-
-        if (val) {
-          message = "Expert settings enabled!";
-        }
-
-        setNotification({
-          message,
-          type: "info",
-          showIcon: true,
-          dismiss: {
-            manually: true,
-            automatically: true,
-          },
-          duration: 5000,
-          showDurationProgress: true,
-          appearance: "light",
-        });
-
-        window.localStorage.setItem("expertSettings", String(val));
-      },
+    components: {
+        Card,
+        Notifications
     },
-  },
-  methods: {
-    subIsActive(input) {
-      const paths = Array.isArray(input) ? input : [input];
-      return paths.some((path) => {
-        return this.$route.path.indexOf(path) === 0; // current path starts with this path string
-      });
+    data() {
+        return {
+            overlay: false,
+            authToken: window.localStorage.getItem("x-auth-token"),
+        };
     },
-    logout() {
-      window.request(
-        "/auth/logout",
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
+    computed: {
+        expertSettingsCheckbox: {
+            get() {
+
+                /*
+                if (window.localStorage.getItem("expertSettings")) {
+                    return window.localStorage.getItem("expertSettings") === "true";
+                }
+                    */
+
+                return store.settings.expertSettings;
+
+            },
+            set(val) {
+
+                let message = "Expert settings disabled!";
+
+                if (val) {
+                    message = "Expert settings enabled!";
+                }
+
+                addNotification(message);
+
+                store.settings.expertSettings = val;
+                window.localStorage.setItem("expertSettings", String(val));
+
+            },
         },
-        (err, data) => {
-          if (err) {
-            console.log("LOGOUT ERROR", err);
-            console.log(err || data);
-            router.replace({
-              path: "/",
-            });
-          } else {
-            window.localStorage.removeItem("x-auth-token");
-            router.replace({
-              path: "/",
-            });
-          }
-        }
-      );
     },
-  },
+    methods: {
+        subIsActive(input) {
+            const paths = Array.isArray(input) ? input : [input];
+            return paths.some((path) => {
+                return this.$route.path.indexOf(path) === 0; // current path starts with this path string
+            });
+        },
+        logout() {
+            window.request("/auth/logout", {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json",
+                },
+            }, (err, data) => {
+                if (err) {
+                    console.log("LOGOUT ERROR", err);
+                    console.log(err || data);
+                    router.replace({
+                        path: "/",
+                    });
+                } else {
+                    window.localStorage.removeItem("x-auth-token");
+                    router.replace({
+                        path: "/",
+                    });
+                }
+            });
+        },
+    }
 };
 </script>
 
 
 <template>
-  <!-- OVERLAY -->
-  <div v-if="overlay" id="overlay" class="text-center">
-    <div id="inner">
-      <h1>Loading...</h1>
+    <!-- OVERLAY -->
+    <div v-if="overlay" id="overlay" class="text-center">
+        <div id="inner">
+            <h1>Loading...</h1>
+        </div>
     </div>
-  </div>
-  <!-- OVERLAY -->
+    <!-- OVERLAY -->
 
-  <!-- NOTIFICATIONS -->
-  <div id="notifications">
-    <vue-notification-list position="top-right"></vue-notification-list>
-  </div>
-  <!-- NAVIGATION -->
+    <!-- NOTIFICATIONS -->
+    <Notifications></Notifications>
+    <!-- NOTIFICATIONS -->
 
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-2 border-end border-secondary" >
-        <ul class="nav flex-column">
-          <RouterLink
-            custom
-            to="/dashboard"
-            v-slot="{ href, navigate, isActive }"
-          >
-            <li class="nav-item">
-              <a
-                class="nav-link"
-                aria-current="page"
-                :href="href"
-                :class="{ active: isActive }"
-                @click="navigate"
-              >
-                <i class="fa-solid fa-gauge-high"></i>
-                Dashboard
-              </a>
-            </li>
-          </RouterLink>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-2 border-end p-0" style="border-right-color: #000 !important">
+                <ul class="nav flex-column">
 
-          <li class="nav-item">
-            <hr />
-          </li>
+                    <!-- DASHBOARD & APP -->
+                    <RouterLink custom to="/dashboard" v-slot="{ href, navigate, isActive }">
+                        <li class="nav-item">
+                            <Card>
+                                <a class="nav-link" aria-current="page" :href="href" :class="{ active: isActive }"
+                                    @click="navigate">
+                                    <i class="fa-solid fa-gauge-high"></i>
+                                    Dashboard
+                                </a>
+                            </Card>
+                        </li>
+                    </RouterLink>
 
-          <RouterLink
-            custom
-            v-bind:to="route.path"
-            v-slot="{ href, navigate, isActive }"
-            v-bind:key="route.path"
-            v-for="route in routes"
-          >
-            <li class="nav-item">
-              <a
-                class="nav-link"
-                aria-current="page"
-                :href="href"
-                :class="{ active: isActive }"
-                @click="navigate"
-              >
-                <i v-bind:class="route.icon"></i>
-                {{ route.name }}
-              </a>
-            </li>
-          </RouterLink>
+                    <li class="nav-item hide">
+                        <Card>
+                            <a class="nav-link" href="/" @click="navigate">
+                                <i class="fa-solid fa-user"></i>
+                                User Interface
+                            </a>
+                        </Card>
+                    </li>
 
-          <li class="nav-item">
-            <hr />
-          </li>
+                    <!-- DASHBOARD & APP -->
 
-          <RouterLink custom to="/logs" v-slot="{ href, navigate, isActive }">
-            <li class="nav-item hide">
-              <a
-                class="nav-link"
-                aria-current="page"
-                :href="href"
-                :class="{ active: isActive }"
-                @click="navigate"
-              >
-                <i class="fa-solid fa-file"></i>
-                Logfiles
-              </a>
-            </li>
-          </RouterLink>
+                    <li class="nav-item">
+                        <hr />
+                    </li>
 
-          <li class="nav-item hide">
-            <a class="nav-link" href="#">
-              <i class="fa-solid fa-gear"></i> Settings
-            </a>
-          </li>
+                    <!-- COMPONENTS -->
+                    <RouterLink custom v-bind:to="route.path" v-slot="{ href, navigate, isActive }"
+                        v-bind:key="route.path" v-for="route in components">
+                        <li class="nav-item">
+                            <Card>
+                                <a class="nav-link" aria-current="page" :href="href" :class="{ active: isActive }"
+                                    @click="navigate">
+                                    <i v-bind:class="route.icon"></i>
+                                    {{ route.name }}
+                                </a>
+                            </Card>
+                        </li>
+                    </RouterLink>
+                    <!-- COMPONENTS -->
 
-          <li class="nav-item" v-if="authToken">
-            <a class="nav-link" href="#" v-on:click.prevent="logout()">
-              <i class="fa-solid fa-right-from-bracket"></i> Logout
-            </a>
-          </li>
+                    <li class="nav-item">
+                        <hr />
+                    </li>
 
-          <RouterLink
-            custom
-            to="/environment"
-            v-slot="{ href, navigate, isActive }"
-          >
-            <li class="nav-item hide">
-              <a
-                class="nav-link"
-                aria-current="page"
-                :href="href"
-                :class="{ active: isActive }"
-                @click="navigate"
-              >
-                <i class="fa-solid fa-sliders"></i>
-                Environment
-              </a>
-            </li>
-          </RouterLink>
+                    <!-- SYSTEM -->
+                    <RouterLink custom v-bind:to="route.path" v-slot="{ href, navigate, isActive }"
+                        v-bind:key="route.path" v-for="route in system">
+                        <li class="nav-item">
+                            <Card>
+                                <a class="nav-link" aria-current="page" :href="href" :class="{ active: isActive }"
+                                    @click="navigate">
+                                    <i v-bind:class="route.icon"></i>
+                                    {{ route.name }}
+                                </a>
+                            </Card>
+                        </li>
+                    </RouterLink>
+                    <!-- SYSTEM -->
 
-          <li class="nav-item hide">
-            <hr />
-          </li>
+                    <li class="nav-item">
+                        <hr />
+                    </li>
 
-          <li class="nav-item hide">
-            <div class="form-check form-switch">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="expertSettingsCheckbox"
-                v-model="expertSettingsCheckbox"
-              />
-              <label
-                class="form-check-label small"
-                for="expertSettingsCheckbox"
-              >
-                Expert Settings
-              </label>
+                    <li class="nav-item hide">
+                        <a class="nav-link" href="#">
+                            <i class="fa-solid fa-gear"></i> Settings
+                        </a>
+                    </li>
+
+                    <li class="nav-item" v-if="authToken">
+                        <a class="nav-link" href="#" v-on:click.prevent="logout()">
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <hr />
+                    </li>
+
+                    <li class="nav-item">
+                        <Card class="p-2">
+                            <div class="form-check form-switch" style="cursor: pointer !important">
+                                <input class="form-check-input" type="checkbox" id="expertSettingsCheckbox"
+                                    v-model="expertSettingsCheckbox" />
+                                <label class="form-check-label small" for="expertSettingsCheckbox">
+                                    Expert Settings
+                                </label>
+                            </div>
+                        </Card>
+                    </li>
+                </ul>
             </div>
-          </li>
-        </ul>
-      </div>
-      <div class="col-10">
-        <!-- VIEW -->
-        <RouterView class="mt-4" />
-        <!-- VIEW -->
-      </div>
+            <div class="col-10">
+                <!-- VIEW -->
+                <RouterView class="mt-4" />
+                <!-- VIEW -->
+            </div>
+        </div>
     </div>
-  </div>
 </template>
 
 <style>
@@ -237,32 +212,48 @@ export default {
 
 html,
 body {
-  min-height: 100%;
-  min-width: 100%;
+    min-height: 100%;
+    min-width: 100%;
+}
+
+hr {
+    margin: 0 0;
+    background-color: var(--bs-blue);
+    box-shadow: 0px 0px 5px 0px var(--bs-blue);
 }
 
 #overlay {
-  position: fixed; /* Sit on top of the page content */
-  min-width: 100%; /* Full width (cover the whole page) */
-  min-height: 100%; /* Full height (cover the whole page) */
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.9); /* Black background with opacity */
-  z-index: 9999; /* Specify a stack order in case you're using a different order for other elements */
+    position: fixed;
+    /* Sit on top of the page content */
+    min-width: 100%;
+    /* Full width (cover the whole page) */
+    min-height: 100%;
+    /* Full height (cover the whole page) */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.9);
+    /* Black background with opacity */
+    z-index: 9999;
+    /* Specify a stack order in case you're using a different order for other elements */
 }
 
-a.nav-link{
-  color: rgba(var(--bs-black-rgb),var(--bs-text-opacity)) !important;
+a.nav-link {
+    color: rgba(var(--bs-black-rgb), var(--bs-text-opacity)) !important;
 }
 
-a.nav-link.active{
-  color: var(--bs-blue) !important;
+a.nav-link.active {
+    color: var(--bs-blue) !important;
 }
 
 #inner {
-  margin: 0 auto;
-  top: calc(100% - 50px);
+    margin: 0 auto;
+    top: calc(100% - 50px);
+}
+
+.table>tbody>tr,
+.table>thead>tr {
+    border: 2px solid #000;
 }
 </style>

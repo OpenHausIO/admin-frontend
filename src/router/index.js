@@ -66,7 +66,7 @@ const components = [{
 
 const system = [{
     path: "/system/backup",
-    name: "Backup",
+    name: "Backup import&export",
     icon: "fa-solid fa-file-zipper",
     component: () => import("../views/system.backup.vue")
 }, {

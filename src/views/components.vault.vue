@@ -1,6 +1,5 @@
 <script>
 import { defineComponent } from "vue";
-import store from "../store.js";
 
 import ActionsButtons from "@/components/ActionsButtons.vue";
 import EditorProperty from "@/components/EditorProperty.vue";
@@ -9,6 +8,9 @@ import JsonEditor from "@/components/JsonEditor.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
+
+import { itemStore } from "../store.js";
+const items = itemStore();
 
 export default defineComponent({
     components: {
@@ -35,32 +37,49 @@ export default defineComponent({
     },
     computed: {
         vault() {
-            return store.state.vault;
+            return items.vault;
         },
     },
     methods: {
-        handleEdit(item) {
-            if (this.editItem === item._id) {
-                this.editItem = null;
-            } else {
-                this.editItem = item._id;
-            }
-        },
-        handleInfo() { },
-        handleRemove(item) {
-            request(`/api/vault/${item._id}`, {
-                method: "DELETE",
-            }, (err, data) => {
-                if (err || data.error) {
+        triggerUpdate(item) {
+            items.update("vault", item, (err) => {
+                if (err) {
 
-                    addNotification(`Error: ${err || data.error}`, {
+                    addNotification(`Error: ${err}`, {
                         type: "danger",
                         dismiss: false
                     });
 
                 } else {
 
-                    addNotification(`Vault "${data.name}" removed`, {
+                    addNotification(`Vault "${item.name}" updated`, {
+                        type: "success"
+                    });
+
+                }
+            });
+        },
+        handleEdit(item) {
+            if (this.editItem === item._id) {
+                this.editItem = null;
+                this.triggerUpdate(item);
+            } else {
+                this.editItem = item._id;
+            }
+        },
+        handleInfo() { },
+        handleRemove(item) {
+            items.remove("vault", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Vault "${item.name}" removed`, {
                         type: "success"
                     });
 
@@ -75,34 +94,10 @@ export default defineComponent({
             this.json = null;
             this.editItem = null;
         },
-        onConfirm(data) {
-
-            request(`/api/vault/${data._id}`, {
-                method: "PATCH",
-                headers: {
-                    "content-type": "application/json"
-                },
-                body: JSON.stringify(data)
-            }, (err) => {
-                if (err || data.error) {
-
-                    addNotification(`Error: ${err || data.error}`, {
-                        type: "danger",
-                        dismiss: false
-                    });
-
-                } else {
-
-                    addNotification(`Vault item "${data.name}" updated`, {
-                        type: "success"
-                    });
-
-                }
-            });
-
+        onConfirm(item) {
             this.json = null;
             this.editItem = null;
-
+            this.triggerUpdate(item);
         }
     }
 });

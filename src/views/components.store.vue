@@ -1,11 +1,12 @@
 <script setup>
 import { getItemByProperty } from "../helper.js";
 import dateFormat from "dateformat";
+import { settingsStore } from "../store.js";
+const settings = settingsStore();
 </script>
 
 <script>
 import { defineComponent } from "vue";
-import store from "../store.js";
 
 import ActionsButtons from "@/components/ActionsButtons.vue";
 import EditorProperty from "@/components/EditorProperty.vue";
@@ -14,6 +15,9 @@ import JsonEditor from "@/components/JsonEditor.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
+
+import { itemStore } from "../store.js";
+const items = itemStore();
 
 export default defineComponent({
     components: {
@@ -40,26 +44,55 @@ export default defineComponent({
     },
     computed: {
         config() {
-            return store.state.store;
+            return items.store;
         },
     },
-    watch: {
-        config(newVal, oldVal) {
-
-            console.log("config changed", newVal, oldVal);
-
-        }
-    },
     methods: {
+        triggerUpdate(item) {
+            items.update("store", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Vault "${item.name}" updated`, {
+                        type: "success"
+                    });
+
+                }
+            });
+        },
         handleEdit(item) {
             if (this.editItem === item._id) {
                 this.editItem = null;
+                this.triggerUpdate(item);
             } else {
                 this.editItem = item._id;
             }
         },
         handleInfo() { },
-        handleRemove() { },
+        handleRemove(item) {
+            items.remove("store", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Store "${item.name}" removed`, {
+                        type: "success"
+                    });
+
+                }
+            });
+        },
         handleJson(item) {
             this.json = item;
         },
@@ -67,34 +100,10 @@ export default defineComponent({
             this.json = null;
             this.editItem = null;
         },
-        onConfirm(data) {
-
-            request(`/api/store/${data._id}`, {
-                method: "PATCH",
-                headers: {
-                    "content-type": "application/json"
-                },
-                body: JSON.stringify(data)
-            }, (err) => {
-                if (err || data.error) {
-
-                    addNotification(`Error: ${err || data.error}`, {
-                        type: "danger",
-                        dismiss: false
-                    });
-
-                } else {
-
-                    addNotification(`Store item "${data.name}" updated`, {
-                        type: "success"
-                    });
-
-                }
-            });
-
+        onConfirm(item) {
             this.json = null;
             this.editItem = null;
-
+            this.triggerUpdate(item);
         }
     },
 });
@@ -149,13 +158,13 @@ export default defineComponent({
                                     <tr>
                                         <td>Created:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.created, "yyyy.mm.dd - HH:MM") }}
+                                            {{ dateFormat(item.timestamps.created, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Updated:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.updated, "yyyy.mm.dd - HH:MM") }}
+                                            {{ dateFormat(item.timestamps.updated, settings.dateformat) }}
                                         </td>
                                     </tr>
                                 </table>

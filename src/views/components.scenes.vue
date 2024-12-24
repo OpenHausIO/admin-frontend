@@ -1,10 +1,11 @@
 <script setup>
 import dateFormat from "dateformat";
+import { settingsStore } from "../store.js";
+const settings = settingsStore();
 </script>
 
 <script>
 import { defineComponent } from "vue";
-import store from "../store.js";
 
 import ActionsButtons from "@/components/ActionsButtons.vue";
 import EditorProperty from "@/components/EditorProperty.vue";
@@ -14,6 +15,9 @@ import JsonEditor from "@/components/JsonEditor.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
+
+import { itemStore } from "../store.js";
+const items = itemStore();
 
 export default defineComponent({
     components: {
@@ -34,19 +38,40 @@ export default defineComponent({
         };
     },
     computed: {
-        items() {
-            return store.state.scenes;
+        scenes() {
+            return items.scenes;
         }
     },
     methods: {
+        triggerUpdate(item) {
+            items.update("scenes", item);
+        },
         handleEdit(item) {
             if (this.editItem === item._id) {
                 this.editItem = null;
+                this.triggerUpdate(item);
             } else {
                 this.editItem = item._id;
             }
         },
-        handleRemove() { },
+        handleRemove(item) {
+            items.remove("scenes", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Scene "${item.name}" removed`, {
+                        type: "success"
+                    });
+
+                }
+            });
+        },
         handleJson(item) {
             this.json = item;
         },
@@ -54,34 +79,30 @@ export default defineComponent({
             this.json = null;
             this.editItem = null;
         },
-        onConfirm(data) {
-
-            request(`/api/scenes/${data._id}`, {
-                method: "PATCH",
-                headers: {
-                    "content-type": "application/json"
-                },
-                body: JSON.stringify(data)
+        onConfirm(item) {
+            this.json = null;
+            this.editItem = null;
+            this.triggerUpdate(item);
+        },
+        triggerScene(item) {
+            request(`/api/scenes/${item._id}/trigger`, {
+                method: "POST"
             }, (err) => {
-                if (err || data.error) {
+                if (err) {
 
-                    addNotification(`Error: ${err || data.error}`, {
+                    addNotification(`Error: ${err}`, {
                         type: "danger",
                         dismiss: false
                     });
 
                 } else {
 
-                    addNotification(`Scenes item "${data._id}" updated`, {
+                    addNotification(`Scene "${item.name}" triggered`, {
                         type: "success"
                     });
 
                 }
             });
-
-            this.json = null;
-            this.editItem = null;
-
         }
     },
 });
@@ -106,7 +127,7 @@ export default defineComponent({
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in items">
+                        <tr v-bind:key="item._id" v-for="(item, index) in scenes">
                             <th scope="row">{{ index + 1 }}</th>
                             <td>
                                 <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon" type="text">
@@ -126,38 +147,45 @@ export default defineComponent({
                                 <table>
                                     <tr>
                                         <td>Created:</td>
-                                        <td> {{ dateFormat(item.timestamps.created || 0, "yyyy.mm.dd - HH:MM") }}
+                                        <td> {{ dateFormat(item.timestamps.created || 0, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Updated:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.updated || 0, "yyyy.mm.dd - HH:MM") }}
+                                            {{ dateFormat(item.timestamps.updated || 0, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Started:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.started || 0, "yyyy.mm.dd - HH:MM") }}
+                                            {{ dateFormat(item.timestamps.started || 0, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Aborted:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.aborted || 0, "yyyy.mm.dd - HH:MM") }}
+                                            {{ dateFormat(item.timestamps.aborted || 0, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Finished:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.finished || 0, "yyyy.mm.dd - HH:MM") }}
+                                            {{ dateFormat(item.timestamps.finished || 0, settings.dateformat) }}
                                         </td>
                                     </tr>
                                 </table>
                             </td>
                             <td>
                                 <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson" />
+                                    @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson">
+                                    <template v-slot:custom>
+                                        <button type="button" class="btn btn-outline-secondary"
+                                            v-tooltip:bottom="'Trigger scene'" @click="triggerScene(item)">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                    </template>
+                                </ActionsButtons>
                             </td>
                         </tr>
                     </tbody>

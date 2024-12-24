@@ -1,6 +1,8 @@
 <script setup>
+import dateFormat from "dateformat";
 import { getItemById } from "../helper.js";
-import store from "../store.js";
+import { settingsStore } from "../store.js";
+const settings = settingsStore();
 </script>
 
 <script>
@@ -14,6 +16,9 @@ import JsonEditor from "@/components/JsonEditor.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
+
+import { itemStore } from "../store.js";
+const items = itemStore();
 
 export default defineComponent({
     components: {
@@ -38,19 +43,58 @@ export default defineComponent({
     },
     computed: {
         devices() {
-            return store.state.devices;
+            return items.devices;
         },
+        rooms() {
+            return items.rooms;
+        }
     },
     methods: {
+        triggerUpdate(item) {
+            items.update("devices", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Device "${item.name}" updated`, {
+                        type: "success"
+                    });
+
+                }
+            });
+        },
         handleEdit(item) {
             if (this.editItem === item._id) {
                 this.editItem = null;
+                this.triggerUpdate(item);
             } else {
                 this.editItem = item._id;
             }
         },
         handleInfo() { },
-        handleRemove() { },
+        handleRemove(item) {
+            items.remove("devices", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Device "${item.name}" removed`, {
+                        type: "success"
+                    });
+
+                }
+            });
+        },
         handleClone() { },
         handleJson(item) {
             this.json = item;
@@ -59,34 +103,10 @@ export default defineComponent({
             this.json = null;
             this.editItem = null;
         },
-        onConfirm(data) {
-
-            request(`/api/devices/${data._id}`, {
-                method: "PATCH",
-                headers: {
-                    "content-type": "application/json"
-                },
-                body: JSON.stringify(data)
-            }, (err) => {
-                if (err || data.error) {
-
-                    addNotification(`Error: ${err || data.error}`, {
-                        type: "danger",
-                        dismiss: false
-                    });
-
-                } else {
-
-                    addNotification(`Devices item "${data.name}" updated`, {
-                        type: "success"
-                    });
-
-                }
-            });
-
+        onConfirm(item) {
             this.json = null;
             this.editItem = null;
-
+            this.triggerUpdate(item);
         }
     },
 });
@@ -109,12 +129,14 @@ export default defineComponent({
                             <th scope="col">Manufacturer</th>
                             <th scope="col">Model</th>
                             <th scope="col">Room</th>
+                            <!--<th scope="col" v-if="settings.expertSettings">Timestamps</th>-->
                             <th scope="col" style="width: 10px">Enabled</th>
                             <th scope="col" style="width: 10px">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in devices">
+                        <tr v-bind:key="item._id" v-for="(item, index) in devices"
+                            :class="{ 'endpoint-disabled': !item.enabled }">
                             <th scope="row">{{ index + 1 }}</th>
                             <td>
                                 <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon" type="text">
@@ -132,31 +154,51 @@ export default defineComponent({
                             </td>
                             <td>
                                 <EditorProperty v-if="item?.meta"
-                                    :enabled="item._id === editItem && store.settings.expertSettings"
-                                    :object="item.meta" prop="manufacturer" type="text" />
+                                    :enabled="item._id === editItem && settings.expertSettings" :object="item.meta"
+                                    prop="manufacturer" type="text" />
                             </td>
                             <td>
                                 <EditorProperty v-if="item?.meta"
-                                    :enabled="item._id === editItem && store.settings.expertSettings"
-                                    :object="item.meta" prop="model" type="text" />
+                                    :enabled="item._id === editItem && settings.expertSettings" :object="item.meta"
+                                    prop="model" type="text" />
                             </td>
                             <td>
                                 <EditorProperty :enabled="item._id === editItem" :object="item" prop="room"
-                                    type="select" :items="store.state.rooms">
+                                    type="select" :items="rooms">
                                     <template v-slot:display="{ value }">
-                                        {{ getItemById(store.state.rooms, value)?.name || "" }}
+                                        {{ getItemById(rooms, value)?.name || "" }}
                                     </template>
                                 </EditorProperty>
                             </td>
+                            <!--
+                            <td v-if="settings.expertSettings">
+
+                                <table>
+                                    <tr>
+                                        <td>Created:</td>
+                                        <td> {{ dateFormat(item.timestamps.created || 0, settings.dateformat) }}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Updated:</td>
+                                        <td>
+                                            {{ dateFormat(item.timestamps.updated || 0, settings.dateformat) }}
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </td>
+-->
                             <td>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"
-                                        v-model="item.enabled" />
+                                        v-model="item.enabled" @change.lazy="triggerUpdate(item)" />
                                 </div>
                             </td>
                             <td>
                                 <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleInfo="handleInfo" @handleJson="handleJson" />
+                                    @handleEdit="handleEdit" @handleRemove="handleRemove" @handleInfo="handleInfo"
+                                    @handleJson="handleJson" />
                             </td>
                         </tr>
                     </tbody>
@@ -177,3 +219,11 @@ export default defineComponent({
         <!--Rooms: {{ rooms }}-->
     </div>
 </template>
+
+<style scoped>
+tr.endpoint-disabled,
+tr.endpoint-disabled>*,
+tr.endpoint-disabled td * {
+    color: var(--bs-gray-800);
+}
+</style>

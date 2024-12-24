@@ -1,6 +1,5 @@
 <script>
 import { defineComponent } from "vue";
-import store from "../store.js";
 
 import ActionsButtons from "@/components/ActionsButtons.vue";
 import EditorProperty from "@/components/EditorProperty.vue";
@@ -10,6 +9,9 @@ import JsonEditor from "@/components/JsonEditor.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
+
+import { itemStore } from "../store.js";
+const items = itemStore();
 
 export default defineComponent({
     components: {
@@ -36,28 +38,45 @@ export default defineComponent({
         };
     },
     methods: {
-        handleEdit(item) {
-            if (this.editItem === item._id) {
-                this.editItem = null;
-            } else {
-                this.editItem = item._id;
-            }
-        },
-        handleInfo() { },
-        handleRemove(item) {
-            request(`/api/rooms/${item._id}`, {
-                method: "DELETE",
-            }, (err, data) => {
-                if (err || data.error) {
+        triggerUpdate(item) {
+            items.update("rooms", item, (err) => {
+                if (err) {
 
-                    addNotification(`Error: ${err || data.error}`, {
+                    addNotification(`Error: ${err}`, {
                         type: "danger",
                         dismiss: false
                     });
 
                 } else {
 
-                    addNotification(`Room "${data.name}" added`, {
+                    addNotification(`Room "${item.name}" updated`, {
+                        type: "success"
+                    });
+
+                }
+            });
+        },
+        handleEdit(item) {
+            if (this.editItem === item._id) {
+                this.editItem = null;
+                this.triggerUpdate(item);
+            } else {
+                this.editItem = item._id;
+            }
+        },
+        handleInfo() { },
+        handleRemove(item) {
+            items.remove("rooms", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Room "${item.name}" deleted`, {
                         type: "success"
                     });
 
@@ -83,18 +102,13 @@ export default defineComponent({
 
             console.log("ADD room", name, floor, number, icon)
 
-            request("/api/rooms", {
-                method: "PUT",
-                body: JSON.stringify({
-                    name: name.value || null,
-                    floor: floor.value || null,
-                    number: number.value || null,
-                    icon: icon.value || null
-                })
+            items.add("rooms", {
+                name: name.value || null,
+                floor: floor.value || null,
+                number: number.value || null,
+                icon: icon.value || null
             }, (err, data) => {
-                if (err || data.error) {
-
-                    console.error("Could not add room", err || data.error);
+                if (err) {
 
                     addNotification(`Error: ${err || data.error}`, {
                         type: "danger",
@@ -103,14 +117,14 @@ export default defineComponent({
 
                 } else {
 
-                    addNotification(`Room "${data.name}" added`, {
+                    addNotification(`Room "${data._id}" added`, {
                         type: "success"
                     });
 
                     name.value = "";
                     floor.value = "";
                     number.value = "";
-                    //icon.value = "";
+                    icon.value = "";
 
                 }
             });
@@ -123,40 +137,16 @@ export default defineComponent({
             this.json = null;
             this.editItem = null;
         },
-        onConfirm(data) {
-
-            request(`/api/rooms/${data._id}`, {
-                method: "PATCH",
-                headers: {
-                    "content-type": "application/json"
-                },
-                body: JSON.stringify(data)
-            }, (err) => {
-                if (err || data.error) {
-
-                    addNotification(`Error: ${err || data.error}`, {
-                        type: "danger",
-                        dismiss: false
-                    });
-
-                } else {
-
-                    addNotification(`Room item "${data.name}" updated`, {
-                        type: "success"
-                    });
-
-                }
-            });
-
+        onConfirm(item) {
             this.json = null;
             this.editItem = null;
-
+            this.triggerUpdate(item);
         }
     },
     mounted() { },
     computed: {
         rooms() {
-            return store.state.rooms;
+            return items.rooms;
         },
         sortedItems: function () {
             return this.rooms.sort((a, b) => {

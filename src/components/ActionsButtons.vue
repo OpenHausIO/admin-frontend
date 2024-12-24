@@ -1,6 +1,7 @@
 <script>
 import { defineComponent } from "vue";
-import store from "../store.js";
+import { settingsStore } from "../store.js";
+const settings = settingsStore();
 
 export default defineComponent({
     props: {
@@ -51,7 +52,7 @@ export default defineComponent({
     ],
     computed: {
         settings() {
-            return store.settings;
+            return settings;
         }
     }
 });

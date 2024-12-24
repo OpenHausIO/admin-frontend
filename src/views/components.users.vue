@@ -1,10 +1,11 @@
 <script setup>
 import dateFormat from "dateformat";
+import { settingsStore } from "../store.js";
+const settings = settingsStore();
 </script>
 
 <script>
 import { defineComponent } from "vue";
-import store from "../store.js";
 
 import ActionsButtons from "@/components/ActionsButtons.vue";
 import EditorProperty from "@/components/EditorProperty.vue";
@@ -13,6 +14,10 @@ import JsonEditor from "@/components/JsonEditor.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
+
+import { itemStore, settingsStore } from "../store.js";
+const items = itemStore();
+const settings = settingsStore();
 
 export default defineComponent({
     components: {
@@ -35,6 +40,24 @@ export default defineComponent({
         };
     },
     methods: {
+        triggerUpdate(item) {
+            items.update("users", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`User "${item.name}" updated`, {
+                        type: "success"
+                    });
+
+                }
+            });
+        },
         tokens(arr, length) {
             console.log("Tokens arr", arr);
             return arr.map((str) => {
@@ -44,25 +67,24 @@ export default defineComponent({
         handleEdit(item) {
             if (this.editItem === item._id) {
                 this.editItem = null;
+                this.triggerUpdate(item);
             } else {
                 this.editItem = item._id;
             }
         },
         handleInfo() { },
         handleRemove(item) {
-            request(`/api/users/${item._id}`, {
-                method: "DELETE",
-            }, (err, data) => {
-                if (err || data.error) {
+            items.remove("users", item, (err) => {
+                if (err) {
 
-                    addNotification(`Error: ${err || data.error}`, {
+                    addNotification(`Error: ${err}`, {
                         type: "danger",
                         dismiss: false
                     });
 
                 } else {
 
-                    addNotification(`User "${data.name}" removed`, {
+                    addNotification(`User "${item.name}" removed`, {
                         type: "success"
                     });
 
@@ -119,39 +141,18 @@ export default defineComponent({
             this.json = null;
             this.editItem = null;
         },
-        onConfirm(data) {
-
-            request(`/api/users/${data._id}`, {
-                method: "PATCH",
-                headers: {
-                    "content-type": "application/json"
-                },
-                body: JSON.stringify(data)
-            }, (err) => {
-                if (err || data.error) {
-
-                    addNotification(`Error: ${err || data.error}`, {
-                        type: "danger",
-                        dismiss: false
-                    });
-
-                } else {
-
-                    addNotification(`User item "${data.name}" updated`, {
-                        type: "success"
-                    });
-
-                }
-            });
-
+        onConfirm(item) {
             this.json = null;
             this.editItem = null;
-
+            this.triggerUpdate(item);
         }
     },
     computed: {
         users() {
-            return store.state.users;
+            return items.users;
+        },
+        settings() {
+            return settings;
         },
     },
 });
@@ -182,11 +183,11 @@ export default defineComponent({
                         <tr v-bind:key="item._id" v-for="(item, index) in users">
                             <th scope="row">{{ index + 1 }}</th>
                             <td>
-                                <EditorProperty :enabled="item._id === editItem && store.settings.expertSettings"
+                                <EditorProperty :enabled="item._id === editItem && settings.expertSettings"
                                     :object="item" prop="name" type="text" />
                             </td>
                             <td>
-                                <EditorProperty :enabled="item._id === editItem && store.settings.expertSettings"
+                                <EditorProperty :enabled="item._id === editItem && settings.expertSettings"
                                     :object="item" prop="email" type="text" />
                             </td>
                             <td>
@@ -211,25 +212,25 @@ export default defineComponent({
                                     <tr>
                                         <td>Created:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.created, "yyyy.mm.dd - HH:MM") }}
+                                            {{ dateFormat(item.timestamps.created, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Updated:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.updated, "yyyy.mm.dd - HH:MM") }}
+                                            {{ dateFormat(item.timestamps.updated, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Login:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.login, "yyyy.mm.dd - HH:MM") }}
+                                            {{ dateFormat(item.timestamps.login, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Logout:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.logout, "yyyy.mm.dd - HH:MM") }}
+                                            {{ dateFormat(item.timestamps.logout, settings.dateformat) }}
                                         </td>
                                     </tr>
                                 </table>

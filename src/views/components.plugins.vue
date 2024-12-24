@@ -1,21 +1,24 @@
-<script setup>
-import store from "../store.js";
-
-import Tabs from "@/components/Tabs.vue";
-import EditorProperty from "@/components/EditorProperty.vue";
-import ActionsButtons from "@/components/ActionsButtons.vue";
-</script>
-
 <script>
 import { defineComponent } from "vue";
 import { request } from "../helper";
 
+import Tabs from "@/components/Tabs.vue";
+import EditorProperty from "@/components/EditorProperty.vue";
+import ActionsButtons from "@/components/ActionsButtons.vue";
+
 import JsonEditor from "@/components/JsonEditor.vue";
 import { addNotification } from "@/components/Notifications.vue";
 
+import { itemStore, settingsStore } from "../store.js";
+const items = itemStore();
+const settings = settingsStore();
+
 export default defineComponent({
     components: {
-        JsonEditor
+        JsonEditor,
+        Tabs,
+        EditorProperty,
+        ActionsButtons
     },
     data() {
         return {
@@ -78,7 +81,10 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
     },
     computed: {
         plugins() {
-            return store.state.plugins;
+            return items.plugins;
+        },
+        settings() {
+            return settings;
         },
         tabItems() {
 
@@ -90,7 +96,7 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                 id: "browse"
             }];
 
-            if (store.settings.expertSettings) {
+            if (settings.expertSettings) {
                 items.splice(1, 0, {
                     name: "Add",
                     id: "add",
@@ -102,14 +108,76 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
         }
     },
     methods: {
+        triggerUpdate(item) {
+            items.update("plugins", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Plugin "${item.name}" updated`, {
+                        type: "success"
+                    });
+
+                }
+            });
+        },
         handleEdit(item) {
             if (this.editItem === item._id) {
                 this.editItem = null;
+                this.triggerUpdate(item);
             } else {
                 this.editItem = item._id;
             }
         },
-        handleRemove() { },
+        handleRemove(item) {
+            items.remove("plugins", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Plugin "${item.name}" removed`, {
+                        type: "success"
+                    });
+
+                    addNotification(`Restart the backend to apply changes!`, {
+                        dismiss: false,
+                        /*
+                        actions: [{
+                            title: "Restart now",
+                            handler(event, notification) {
+
+                                event.preventDefault();
+                                event.stopPropagation();
+
+                                alert("Restart now clicked");
+
+                            }
+                        }, {
+                            title: "Later",
+                            handler(event, { close }) {
+
+                                event.preventDefault();
+                                event.stopPropagation();
+                                close();
+
+                            }
+                        }]
+                        */
+                    });
+
+                }
+            });
+        },
         handleInfo() { },
         showInfo() { },
         handleStart(item) {
@@ -259,34 +327,12 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
         },
         onClose() {
             this.json = null;
+            this.editItem = null;
         },
-        onConfirm(data) {
-
-            request(`/api/plugins/${data._id}`, {
-                method: "PATCH",
-                headers: {
-                    "content-type": "application/json"
-                },
-                body: JSON.stringify(data)
-            }, (err) => {
-                if (err || data.error) {
-
-                    addNotification(`Error: ${err || data.error}`, {
-                        type: "danger",
-                        dismiss: false
-                    });
-
-                } else {
-
-                    addNotification(`Plugin item "${data.name}" updated`, {
-                        type: "success"
-                    });
-
-                }
-            });
-
+        onConfirm(item) {
             this.json = null;
-
+            this.editItem = null;
+            this.triggerUpdate(item);
         }
     },
     mounted() {
@@ -325,18 +371,18 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                             <th scope="row">{{ index + 1 }}</th>
                             <td>
                                 <EditorProperty
-                                    :enabled="item._id === editItem && store.settings.expertSettings && enabledEditFields"
+                                    :enabled="item._id === editItem && settings.expertSettings && enabledEditFields"
                                     :object="item" prop="name" type="text" />
                             </td>
                             <td>
                                 <EditorProperty
-                                    :enabled="item._id === editItem && store.settings.expertSettings && enabledEditFields"
+                                    :enabled="item._id === editItem && settings.expertSettings && enabledEditFields"
                                     :object="item" prop="version" type="text" />
                             </td>
                             <td>
 
                                 <EditorProperty
-                                    :enabled="item._id === editItem && store.settings.expertSettings && enabledEditFields"
+                                    :enabled="item._id === editItem && settings.expertSettings && enabledEditFields"
                                     :object="item" prop="uuid" type="text" />
                             </td>
                             <td>
@@ -354,13 +400,15 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                             <td>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" :disabled="!item.enabled"
-                                        v-bind:checked="item.autostart" v-model="item.autostart" />
+                                        v-bind:checked="item.autostart" v-model="item.autostart"
+                                        @change.lazy="triggerUpdate(item)" />
                                 </div>
                             </td>
                             <td>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"
-                                        v-model="item.enabled" v-on:click="item.autostart = false" />
+                                        v-model="item.enabled" v-on:click="item.autostart = false"
+                                        @change.lazy="triggerUpdate(item)" />
                                 </div>
                             </td>
                             <td>

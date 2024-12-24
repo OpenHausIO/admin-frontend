@@ -1,13 +1,11 @@
-import { createApp } from "vue";
+import { createApp, watch } from "vue";
 import App from "./App.vue";
 import router from "./router";
-import store from "./store.js";
-
-import VueNotificationList from '@dafcoe/vue-notification';
+import { itemStore } from "./store";
+import { createPinia } from "pinia";
 import { Tooltip } from "bootstrap";
-
-import { request } from "./helper.js";
-
+import { request, itemWrapper } from "./helper.js";
+import { addNotification } from "./components/Notifications.vue";
 
 // monkey patch ws
 window.events = null;
@@ -15,8 +13,11 @@ window.forceReactiviy = false;
 
 
 // create vue app
+const pinia = createPinia();
 const app = createApp(App);
 
+app.use(pinia);
+app.use(router);
 
 if (![
     "localhost",
@@ -32,7 +33,6 @@ if (![
     };
 }
 
-
 app.directive("tooltip", (el, binding) => {
     return new Tooltip(el, {
         title: binding.value || "<i>no value</i>",
@@ -40,6 +40,38 @@ app.directive("tooltip", (el, binding) => {
         trigger: "hover",
         customClass: "custom-tooltip"
     });
+});
+
+
+pinia.use(({ store, options }) => {
+    if (options?.persistent) {
+
+        if (window.localStorage.getItem(store.$id)) {
+            Object.assign(store.$state, JSON.parse(window.localStorage.getItem(store.$id)));
+        }
+
+        store.$subscribe((mutation, state) => {
+            window.localStorage.setItem(store.$id, JSON.stringify(state));
+        });
+
+    }
+});
+
+
+pinia.use(({ store }) => {
+    if (store.$id === "settings") {
+
+        store.$subscribe(({ events }) => {
+            if (events.newValue !== events.oldValue && events.key === "expertSettings") {
+                if (events.type === "set" && events.newValue) {
+                    addNotification("Expert settings enabled")
+                } else {
+                    addNotification("Expert settings disabled")
+                }
+            }
+        });
+
+    }
 });
 
 
@@ -90,7 +122,6 @@ Promise.all([
             console.warn(`WebSocket connection ${ws.url} closed`);
         };
 
-
         ws.onopen = () => {
             console.log(`WebSocket connection ${ws.url} open`);
             clearTimeout(id);
@@ -101,19 +132,71 @@ Promise.all([
             return ws.send(JSON.stringify(data));
         };
 
+        ws.json = (data) => {
+            return ws.send(JSON.stringify(data));
+        };
+
+        const store = itemStore();
+
         ws.onmessage = (msg) => {
+            try {
 
-            let data = JSON.parse(msg.data);
+                let data = JSON.parse(msg.data);
 
-            console.log("[EVENT]", data);
-            //app.$emit("event", data);
+                if (Object.prototype.hasOwnProperty.call(store, data.component)) {
+                    if (data.event === "add") {
 
+                        let target = store[data.component].find((item) => {
+                            console.log("check item main.js", item._id, data.args[0]._id);
+                            return item._id == data.args[0]._id;
+                        });
+
+                        console.log("Add event, exists?", target)
+
+                        if (target) {
+                            return
+                        }
+
+                        // add new item to store
+                        store[data.component].push(data.args[0]);
+
+                    } else if (data.event === "update") {
+
+                        let target = store[data.component].find((item) => {
+                            return item._id == data.args[0]._id;
+                        });
+
+                        if (!target) {
+                            return;
+                        }
+
+                        // update/patch item in store
+                        Object.assign(target, data.args[0]);
+
+                    } else if (data.event === "remove") {
+
+                        let index = store[data.component].findIndex((item) => {
+                            return item._id == data.args[0]._id;
+                        });
+
+                        if (index === -1) {
+                            return;
+                        }
+
+                        // remove item from store
+                        store[data.component].splice(index, 1);
+
+                    }
+                }
+
+            } catch (err) {
+                console.error("Could not handle message", err);
+            }
         };
 
         window.events = ws;
 
     }),
-
 
     // fetch /api resources
     new Promise((resolve, reject) => {
@@ -145,7 +228,9 @@ Promise.all([
             scenes
         ]) => {
 
+            const store = itemStore();
 
+            /*
             rooms.forEach(item => store.state.rooms.push(item));
             endpoints.forEach(item => store.state.endpoints.push(item));
             devices.forEach(item => store.state.devices.push(item));
@@ -154,12 +239,24 @@ Promise.all([
             vault.forEach(item => store.state.vault.push(item));
             config.forEach(item => store.state.store.push(item));
             ssdp.forEach(item => store.state.ssdp.push(item));
-
             mdns.forEach(item => store.state.mdns.push(item));
             mqtt.forEach(item => store.state.mqtt.push(item));
             webhooks.forEach(item => store.state.webhooks.push(item));
             scenes.forEach(item => store.state.scenes.push(item));
+            */
 
+            store.rooms = itemWrapper(rooms, "rooms");
+            store.endpoints = itemWrapper(endpoints, "endpoints");
+            store.devices = itemWrapper(devices, "devices");
+            store.plugins = itemWrapper(plugins, "plugins");
+            store.users = itemWrapper(users, "users");
+            store.vault = itemWrapper(vault, "vault");
+            store.store = itemWrapper(config, "store");
+            store.ssdp = itemWrapper(ssdp, "ssdp");
+            store.mdns = itemWrapper(mdns, "mdns");
+            store.mqtt = itemWrapper(mqtt, "mqtt");
+            store.webhooks = itemWrapper(webhooks, "webhooks");
+            store.scenes = itemWrapper(scenes, "scenes");;
 
             console.log("[pre] api resrouces fetched");
 
@@ -178,10 +275,7 @@ Promise.all([
 
     console.log("Preshit done, mount vue app");
 
-    app.use(router);
-    //app.use(store);
-
-    app.use(VueNotificationList);
+    //app.use(VueNotificationList);
 
     app.mount("#app");
 

@@ -2,16 +2,18 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap";
 import { router, components, system } from "./router/index.js";
+import { settingsStore } from "./store.js";
+//import "@dafcoe/vue-notification/dist/vue-notification.css";
 
-import "@dafcoe/vue-notification/dist/vue-notification.css";
+const settings = settingsStore();
 </script>
 
 <script>
-import store from "./store.js";
+import { defineComponent } from "vue";
 import Card from "@/components/Card.vue";
-import Notifications, { addNotification } from "@/components/Notifications.vue";
+import Notifications from "@/components/Notifications.vue";
 
-export default {
+export default defineComponent({
     components: {
         Card,
         Notifications
@@ -19,37 +21,15 @@ export default {
     data() {
         return {
             overlay: false,
-            authToken: window.localStorage.getItem("x-auth-token"),
+            dateformats: [
+                "yyyy.mm.dd - HH:MM",
+                "yyyy.mm.dd - HH:MM:ss",
+                "yyyy.mm.dd - HH:MM:ss.l",
+                "dd.mm.yyyy - HH:MM",
+                "dd.mm.yyyy - HH:MM:ss",
+                "dd.mm.yyyy - HH:MM:ss.l"
+            ]
         };
-    },
-    computed: {
-        expertSettingsCheckbox: {
-            get() {
-
-                /*
-                if (window.localStorage.getItem("expertSettings")) {
-                    return window.localStorage.getItem("expertSettings") === "true";
-                }
-                    */
-
-                return store.settings.expertSettings;
-
-            },
-            set(val) {
-
-                let message = "Expert settings disabled!";
-
-                if (val) {
-                    message = "Expert settings enabled!";
-                }
-
-                addNotification(message);
-
-                store.settings.expertSettings = val;
-                window.localStorage.setItem("expertSettings", String(val));
-
-            },
-        },
     },
     methods: {
         subIsActive(input) {
@@ -80,7 +60,7 @@ export default {
             });
         },
     }
-};
+});
 </script>
 
 
@@ -174,12 +154,6 @@ export default {
                         </a>
                     </li>
 
-                    <li class="nav-item" v-if="authToken">
-                        <a class="nav-link" href="#" v-on:click.prevent="logout()">
-                            <i class="fa-solid fa-right-from-bracket"></i> Logout
-                        </a>
-                    </li>
-
                     <li class="nav-item">
                         <hr />
                     </li>
@@ -187,14 +161,24 @@ export default {
                     <li class="nav-item">
                         <Card class="p-2">
                             <div class="form-check form-switch" style="cursor: pointer !important">
-                                <input class="form-check-input" type="checkbox" id="expertSettingsCheckbox"
-                                    v-model="expertSettingsCheckbox" />
-                                <label class="form-check-label small" for="expertSettingsCheckbox">
+                                <label>
+                                    <input class="form-check-input" type="checkbox" v-model="settings.expertSettings" />
                                     Expert Settings
                                 </label>
                             </div>
                         </Card>
                     </li>
+
+                    <li class="nav-item">
+                        <Card class="p-2">
+                            <select class="form-select bg-dark text-white" v-model="settings.dateformat">
+                                <option v-for="format in dateformats">
+                                    {{ format }}
+                                </option>
+                            </select>
+                        </Card>
+                    </li>
+
                 </ul>
             </div>
             <div class="col-10">

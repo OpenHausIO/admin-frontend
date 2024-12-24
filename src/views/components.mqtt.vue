@@ -1,10 +1,11 @@
 <script setup>
 import dateFormat from "dateformat";
+import { settingsStore } from "../store.js";
+const settings = settingsStore();
 </script>
 
 <script>
 import { defineComponent } from "vue";
-import store from "../store.js";
 
 import ActionsButtons from "@/components/ActionsButtons.vue";
 import EditorProperty from "@/components/EditorProperty.vue";
@@ -13,6 +14,9 @@ import JsonEditor from "@/components/JsonEditor.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
+
+import { itemStore } from "../store.js";
+const items = itemStore();
 
 export default defineComponent({
     components: {
@@ -35,37 +39,24 @@ export default defineComponent({
         };
     },
     computed: {
-        items() {
-            return store.state.mqtt;
+        mqtt() {
+            return items.mqtt;
         }
     },
     methods: {
+        triggerUpdate(item) {
+            items.update("mqtt", item);
+        },
         handleEdit(item) {
             if (this.editItem === item._id) {
                 this.editItem = null;
+                this.triggerUpdate(item);
             } else {
                 this.editItem = item._id;
             }
         },
         handleRemove(item) {
-            request(`/api/mqtt/${item._id}`, {
-                method: "DELETE",
-            }, (err, data) => {
-                if (err || data.error) {
-
-                    addNotification(`Error: ${err || data.error}`, {
-                        type: "danger",
-                        dismiss: false
-                    });
-
-                } else {
-
-                    addNotification(`MQTT item "${data._id}" removed`, {
-                        type: "success"
-                    });
-
-                }
-            });
+            items.remove("mqtt", item);
         },
         addItem(event) {
 
@@ -76,16 +67,13 @@ export default defineComponent({
 
             console.log("ADD item", description, topic)
 
-            request("/api/mqtt", {
-                method: "PUT",
-                body: JSON.stringify({
-                    description: description.value || null,
-                    topic: topic.value || null
-                })
+            items.add("mqtt", {
+                description: description.value || null,
+                topic: topic.value || null
             }, (err, data) => {
-                if (err || data.error) {
+                if (err) {
 
-                    addNotification(`Error: ${err || data.error}`, {
+                    addNotification(`Error: ${err}`, {
                         type: "danger",
                         dismiss: false
                     });
@@ -111,34 +99,10 @@ export default defineComponent({
             this.json = null;
             this.editItem = null;
         },
-        onConfirm(data) {
-
-            request(`/api/mqtt/${data._id}`, {
-                method: "PATCH",
-                headers: {
-                    "content-type": "application/json"
-                },
-                body: JSON.stringify(data)
-            }, (err) => {
-                if (err || data.error) {
-
-                    addNotification(`Error: ${err || data.error}`, {
-                        type: "danger",
-                        dismiss: false
-                    });
-
-                } else {
-
-                    addNotification(`MQTT item "${data._id}" updated`, {
-                        type: "success"
-                    });
-
-                }
-            });
-
+        onConfirm(item) {
             this.json = null;
             this.editItem = null;
-
+            this.triggerUpdate(item);
         }
     },
 });
@@ -163,7 +127,7 @@ export default defineComponent({
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in items">
+                        <tr v-bind:key="item._id" v-for="(item, index) in mqtt">
                             <th scope="row">{{ index + 1 }}</th>
                             <td>
                                 <EditorProperty :enabled="item._id === editItem" :object="item" prop="description"
@@ -177,13 +141,13 @@ export default defineComponent({
                                 <table>
                                     <tr>
                                         <td>Created:</td>
-                                        <td> {{ dateFormat(item.timestamps.created || 0, "yyyy.mm.dd - HH:MM") }}
+                                        <td> {{ dateFormat(item.timestamps.created || 0, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Updated:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.updated || 0, "yyyy.mm.dd - HH:MM") }}
+                                            {{ dateFormat(item.timestamps.updated || 0, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <!--

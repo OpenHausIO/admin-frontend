@@ -1,153 +1,202 @@
-import { reactive } from 'vue'
-import { debounce, request } from "./helper.js";
+import { defineStore } from "pinia";
+import { request, debounce } from "./helper.js"
+import { addNotification } from "./components/Notifications.vue";
 
-import { addNotification } from "@/components/Notifications.vue";
+const itemStore = defineStore("items", {
+    state() {
+        return {
+            rooms: [],
+            endpoints: [],
+            devices: [],
+            scenes: [],
+            mdns: [],
+            mqtt: [],
+            plugins: [],
+            scenes: [],
+            ssdp: [],
+            store: [],
+            users: [],
+            vault: [],
+            webhooks: []
+        }
+    },
+    actions: {
+        update(key, data, cb) {
+            if (Object.prototype.hasOwnProperty.call(this, key)) {
 
-// https://stackoverflow.com/a/35610685/5781499
-// https://github.com/OpenHausIO/backend/blob/e0e3c119a04e3adb81f58425d6ff727974bdc18f/system/component/class.component.js#L51
+                //console.log(`Update property set "${key}"`, data);
 
-let itemWrapper = (item, component) => {
+                let target = Array.from(this[key]).find((item) => {
+                    return item._id === data._id;
+                });
 
-    let update = debounce(() => {
+                if (!target) {
+                    return;
+                }
 
-        console.log(`Do PATCH request: ${window.location.origin}/api/${component}/${item._id}`, item);
+                if (!cb) {
+                    cb = (err) => {
+                        if (err) {
+                            addNotification(`Error: ${err}`, {
+                                type: "danger",
+                                dismiss: false
+                            });
+                        } else {
+                            addNotification(`Item "${data._id}" updated`, {
+                                type: "success"
+                            });
+                        }
+                    };
+                }
 
-        request(`${window.location.origin}/api/${component}/${item._id}`, {
-            method: "PATCH",
-            body: JSON.stringify(item)
-        }, (err, result) => {
+                request(`/api/${key}/${data._id}`, {
+                    method: "PATCH",
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                }, (err, data) => {
 
-            console.log(err, result);
+                    if (err || data?.error) {
+                        console.error(err || data?.error);
+                    } else {
+                        Object.assign(target, data);
+                    }
 
-            if (result.error || err) {
+                    cb(err || data?.error, data);
 
-                addNotification(`Could not update item "${item._id}" in component "${component}": ${err || result.error}`, {
-                    type: "danger",
-                    dismiss: false
                 });
 
             } else {
 
-                addNotification(`Item "${item._id}" in component "${component}" updated`, {
-                    type: "success"
-                });
+                console.warn(`Could not update property "${key}" in store`);
 
             }
+        },
+        add(key, data, cb) {
+            if (Object.prototype.hasOwnProperty.call(this, key)) {
 
-        })
+                if (!cb) {
+                    cb = (err) => {
+                        if (err) {
+                            addNotification(`Error: ${err}`, {
+                                type: "danger",
+                                dismiss: false
+                            });
+                        } else {
+                            addNotification(`Item "${data._id}" updated`, {
+                                type: "success"
+                            });
+                        }
+                    };
+                }
 
-    }, 500);
+                request(`/api/${key}`, {
+                    method: "PUT",
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                }, (err, data) => {
 
-    // with reactivitiy, vue browser extentions display nothing more...
-    if (![
-        "127.0.0.1",
-        "localhost"
-    ].includes(window.location.hostname) || window.forceReactiviy) {
-        item = reactive(item)
-    } else {
-        console.error("Reacvitiy may be not working 100%");
+                    console.log("put request", err || data);
+
+                    if (err || data?.error) {
+                        console.error(err || data?.error);
+                    } else {
+
+                        // NOTE: remove the .push?
+                        // because events are handled via websocket
+                        // drop the updateing/removing/adding from the store
+                        // and handle that only via websocket events?
+
+                        let target = this[key].find((item) => {
+                            console.log("check item store.js", item._id, data._id);
+                            return item._id == data._id;
+                        });
+
+                        cb(err || data?.error, data);
+
+                        if (target) {
+                            return;
+                        }
+
+                        this[key].push(data);
+                    }
+
+                });
+
+            } else {
+
+                console.warn(`Could not add item to property "${key}" in store`);
+
+            }
+        },
+        remove(key, data, cb) {
+            if (Object.prototype.hasOwnProperty.call(this, key)) {
+
+                console.log(`Remove property to store "${key}"`, data);
+
+                if (!cb) {
+                    cb = (err) => {
+                        if (err) {
+                            addNotification(`Error: ${err}`, {
+                                type: "danger",
+                                dismiss: false
+                            });
+                        } else {
+                            addNotification(`Item "${data._id}" removed`, {
+                                type: "success"
+                            });
+                        }
+                    };
+                }
+
+                request(`/api/${key}/${data._id}`, {
+                    method: "DELETE",
+                    headers: {
+                        "content-type": "application/json"
+                    }
+                }, (err, data) => {
+
+                    if (err || data?.error) {
+                        console.error(err || data?.error);
+                    }
+
+                    cb(err || data?.error, data);
+
+                    let index = this[key].findIndex((item) => {
+                        return item._id === data._id;
+                    });
+
+                    if (index === -1) {
+                        return;
+                    }
+
+                    this[key].splice(index, 1);
+
+                });
+
+            } else {
+
+                console.warn(`Could not remove item to property "${key}" in store`);
+
+            }
+        }
     }
-
-    return new Proxy(item, {
-        //return new Proxy(item, {
-        set(target, prop, value) {
-
-            console.log("Update item object", item);
-
-            // empty string are not allowed
-            // however, null is a valid value
-            if (value === "") {
-                value = null;
-            }
-
-            target[prop] = value;
-
-            update();
-
-            return true;
-
-        }
-    });
-
-};
-
-
-const handle = (obj, component) => {
-    return new Proxy(obj, {
-        set(target, prop, value) {
-
-            // check if prop is number (array item)
-            // if so, wrap the object/item in a proxy
-            if (new RegExp(/^\d+$/).test(prop)) {
-                target[prop] = itemWrapper(value, component);
-            } else {
-                target[prop] = value;
-            }
-
-            return true;
-
-        }
-    });
-};
-
-
-const state = {
-    rooms: handle([], "rooms"),
-    endpoints: handle([], "endpoints"),
-    users: handle([], "users"),
-    devices: handle([], "devices"),
-    plugins: handle([], "plugins"),
-    vault: handle([], "vault"),
-    store: handle([], "store"),
-    ssdp: handle([], "ssdp"),
-    mdns: handle([], "mdns"),
-    mqtt: handle([], "mqtt"),
-    webhooks: handle([], "webhooks"),
-    scenes: handle([], "scenes")
-};
-
-
-const settings = reactive({
-    dateformat: "yyyy.mm.dd - HH:MM",
-    expertSettings: false
 });
 
-if (window.localStorage.getItem("expertSettings")) {
-    console.warn("expertSettings", window.localStorage.getItem("expertSettings"));
-    settings.expertSettings = window.localStorage.getItem("expertSettings") === "true";
-}
+const settingsStore = defineStore("settings", {
+    state() {
+        return {
+            dateformat: "yyyy.mm.dd - HH:MM:ss",
+            expertSettings: false
+        }
+    },
+    persistent: true
+});
 
-window.state = state;
-
-export default {
-    state,
-    settings
-}
-
-
-/*
-setTimeout(() => {
-
-    console.clear();
-    console.log("Add rooms item");
-
-    states.rooms.push({
-        _id: "631b7f4643f642a9762f370f",
-        name: "Hello",
-        icon: "fa-solid fa-light-bulb",
-        timestamps: {
-            foo: Date.now(),
-            bar: Date.now() - 10000
-        },
-        enabled: true
-    });
-
-    let obj = states.rooms[0];
-
-    obj.name = "New Name";
-    obj.enabled = false;
-
-    console.log("Obj", obj);
-
-}, 5000);
-*/
+export {
+    itemStore,
+    settingsStore
+};

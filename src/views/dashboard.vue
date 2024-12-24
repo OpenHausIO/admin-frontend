@@ -1,10 +1,9 @@
-<script setup>
-import store from "../store.js";
-</script>
-
 <script>
 import { defineComponent } from "vue";
 import Card from "@/components/Card.vue";
+
+import { itemStore } from "../store.js";
+const items = itemStore();
 
 export default defineComponent({
     components: {
@@ -16,62 +15,62 @@ export default defineComponent({
                 title: "Rooms",
                 icon: "fa-door-open",
                 href: "/rooms",
-                size: store.state.rooms.length
+                size: items.rooms.length
             }, {
                 title: "Devices",
                 icon: "fa-tv",
                 href: "/devices",
-                size: store.state.devices.length
+                size: items.devices.length
             }, {
                 title: "Users",
                 icon: "fa-user",
                 href: "/users",
-                size: store.state.users.length
+                size: items.users.length
             }, {
                 title: "Plugins",
                 icon: "fa-puzzle-piece",
                 href: "/plugins",
-                size: store.state.plugins.length
+                size: items.plugins.length
             }, {
                 title: "Endpoints",
                 icon: "fa-lightbulb ",
                 href: "/endpoints",
-                size: store.state.plugins.length
+                size: items.plugins.length
             }, {
                 title: "Vaults",
                 icon: "fa-vault",
                 href: "/vault",
-                size: store.state.vault.length
+                size: items.vault.length
             }, {
                 title: "Store",
                 icon: "fa-screwdriver-wrench",
                 href: "/store",
-                size: store.state.store.length
+                size: items.store.length
             }, {
                 title: "SSDP",
                 icon: "fa-right-left",
                 href: "/ssdp",
-                size: store.state.ssdp.length
+                size: items.ssdp.length
             }, {
                 title: "MDNS",
                 icon: "fa-reply-all",
                 href: "/mdns",
-                size: store.state.mdns.length
+                size: items.mdns.length
             }, {
                 title: "MQTT",
                 icon: "fa-file-pen",
                 href: "/mqtt",
-                size: store.state.mqtt.length
+                size: items.mqtt.length
             }, {
                 title: "Webhooks",
                 icon: "fa-anchor",
                 href: "/webhooks",
-                size: store.state.webhooks.length
+                size: items.webhooks.length
             }, {
                 title: "Scenes",
                 icon: "fa-clone",
                 href: "/scenes",
-                size: store.state.scenes.length
+                size: items.scenes.length
             }]
         };
     }

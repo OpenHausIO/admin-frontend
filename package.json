@@ -17,6 +17,7 @@
         "colors": "^1.4.0",
         "dateformat": "^5.0.3",
         "json-editor-vue": "^0.17.3",
+        "pinia": "^2.3.0",
         "vue": "^3.2.31",
         "vue-router": "^4.0.12"
     },

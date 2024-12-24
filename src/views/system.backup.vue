@@ -1,3 +1,8 @@
+<script setup>
+import { settingsStore } from "../store.js";
+const settings = settingsStore();
+</script>
+
 <script>
 import { defineComponent } from 'vue';
 
@@ -20,7 +25,7 @@ export default defineComponent({
                 id: "import",
             }],
             exportData: {
-                includes: [],
+                includes: ["database", "plugins", "env"],
                 encrypt: false,
                 encode: true,
                 showModal: false,
@@ -226,7 +231,7 @@ export default defineComponent({
                 </template>
             </Modal>
 
-            <div class="form-check form-switch">
+            <div class="form-check form-switch" v-if="settings.expertSettings">
                 <label>
                     <input class="form-check-input" type="checkbox" v-model="exportData.encode" />
                     Encode .env values
@@ -242,21 +247,21 @@ export default defineComponent({
 
             <hr />
 
-            <div class="form-check form-switch">
+            <div class="form-check form-switch" v-if="settings.expertSettings">
                 <label>
                     <input class="form-check-input" type="checkbox" v-model="exportData.includes" value="database" />
                     Include Database
                 </label>
             </div>
 
-            <div class="form-check form-switch">
+            <div class="form-check form-switch" v-if="settings.expertSettings">
                 <label>
                     <input class="form-check-input" type="checkbox" v-model="exportData.includes" value="plugins" />
                     Include Plugins files
                 </label>
             </div>
 
-            <div class="form-check form-switch">
+            <div class="form-check form-switch" v-if="settings.expertSettings">
                 <label>
                     <input class="form-check-input" type="checkbox" v-model="exportData.includes" value="env" />
                     Include .env file
@@ -291,21 +296,21 @@ export default defineComponent({
 
             <input type="file" ref="fileInput" class="hide" @change="handleFileChange">
 
-            <div class="form-check form-switch">
+            <div class="form-check form-switch" v-if="settings.expertSettings">
                 <label>
                     <input class="form-check-input" type="checkbox" v-model="importData.decode" />
                     Decode .env values
                 </label>
             </div>
 
-            <div class="form-check form-switch">
+            <div class="form-check form-switch" v-if="settings.expertSettings">
                 <label>
                     <input class="form-check-input" type="checkbox" v-model="importData.truncate" />
                     Truncate database & files (tabula rasa)
                 </label>
             </div>
 
-            <div class="form-check form-switch">
+            <div class="form-check form-switch" v-if="settings.expertSettings">
                 <label>
                     <input class="form-check-input" type="checkbox" v-model="importData.skipDuplicates" />
                     Skip duplicates (Skip same databse _id items)

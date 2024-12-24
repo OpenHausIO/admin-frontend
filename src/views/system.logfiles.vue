@@ -1,15 +1,16 @@
 <script setup>
-import store from "../store.js";
 import dateFormat from "dateformat";
-//import colors from "colors";
-
-import Tabs from "@/components/Tabs.vue";
 </script>
 
 <script>
 import { defineComponent } from "vue";
 
+import Tabs from "@/components/Tabs.vue";
+
 export default defineComponent({
+    components: {
+        Tabs
+    },
     data() {
         return {
             records: [],
@@ -47,14 +48,20 @@ export default defineComponent({
         };
 
         ws.onmessage = ({ data }) => {
-            // handle incoming messages
-            let entry = JSON.parse(data);
-            this.records.push(entry);
+            try {
 
-            // autoscroll to bottom
-            if (this.autoscrollEnabled) {
-                let container = this.$refs.logfilecontainer;
-                container.scrollTop = container.scrollHeight;
+                // handle incoming messages
+                let entry = JSON.parse(data);
+                this.records.push(entry);
+
+                // autoscroll to bottom
+                if (this.autoscrollEnabled) {
+                    let container = this.$refs.logfilecontainer;
+                    container.scrollTop = container.scrollHeight;
+                }
+
+            } catch (e) {
+                // ignore errors
             }
         };
     },

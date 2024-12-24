@@ -38,7 +38,7 @@ const addNotification = (message, opts) => {
         if (notifications.length > 0) {
 
             let index = notifications.findIndex((n) => {
-                return n.message === opts.message && n.timestamp === opts.timestamp;
+                return /*n.message === opts.message &&*/ n.timestamp === opts.timestamp;
             });
 
             removeNotification(index);

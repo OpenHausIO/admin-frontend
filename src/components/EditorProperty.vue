@@ -50,9 +50,9 @@ export default defineComponent({
                 <ul v-else-if="type === 'checkbox'">
                     <li v-bind:key="index" v-for="(item, index) in items">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" :value="item.value" v-model="object[prop]"
-                                :disabled="disabled" />
-                            <label class="form-check-label small">
+                            <label class="form-check-label">
+                                <input class="form-check-input" type="checkbox" :value="item.value"
+                                    v-model="object[prop]" :disabled="disabled" />
                                 {{ item.name }}
                             </label>
                         </div>

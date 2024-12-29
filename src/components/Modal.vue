@@ -120,7 +120,11 @@ export default {
     display: block !important;
 }
 
+/*
+notifications are 1040
+modal overlays them
 .modal-dialog {
     z-index: 1050;
 }
+*/
 </style>

@@ -58,23 +58,6 @@ pinia.use(({ store, options }) => {
 });
 
 
-pinia.use(({ store }) => {
-    if (store.$id === "settings") {
-
-        store.$subscribe(({ events }) => {
-            if (events.newValue !== events.oldValue && events.key === "expertSettings") {
-                if (events.type === "set" && events.newValue) {
-                    addNotification("Expert settings enabled")
-                } else {
-                    addNotification("Expert settings disabled")
-                }
-            }
-        });
-
-    }
-});
-
-
 Promise.all([
 
     // for DOM to be ready

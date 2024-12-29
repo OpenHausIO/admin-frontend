@@ -11,7 +11,7 @@ const settings = settingsStore();
 <script>
 import { defineComponent } from "vue";
 import Card from "@/components/Card.vue";
-import Notifications from "@/components/Notifications.vue";
+import Notifications, { addNotification } from "@/components/Notifications.vue";
 
 export default defineComponent({
     components: {
@@ -59,6 +59,13 @@ export default defineComponent({
                 }
             });
         },
+        showExpertSettingsNotification({ target }) {
+            if (target.checked) {
+                addNotification("Expert settings enabled");
+            } else {
+                addNotification("Expert settings disabled");
+            }
+        }
     }
 });
 </script>
@@ -95,7 +102,7 @@ export default defineComponent({
                         </li>
                     </RouterLink>
 
-                    <li class="nav-item hide">
+                    <li class="nav-item">
                         <Card>
                             <a class="nav-link" href="/" @click="navigate">
                                 <i class="fa-solid fa-user"></i>
@@ -162,7 +169,8 @@ export default defineComponent({
                         <Card class="p-2">
                             <div class="form-check form-switch" style="cursor: pointer !important">
                                 <label>
-                                    <input class="form-check-input" type="checkbox" v-model="settings.expertSettings" />
+                                    <input class="form-check-input" type="checkbox" v-model="settings.expertSettings"
+                                        @change.lazy="showExpertSettingsNotification" />
                                     Expert Settings
                                 </label>
                             </div>

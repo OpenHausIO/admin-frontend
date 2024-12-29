@@ -15,6 +15,7 @@ const {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+    base: "/admin/",
     plugins: [vue()],
     resolve: {
         alias: {
@@ -35,7 +36,16 @@ export default defineConfig({
     },
     build: {
         outDir: "build",
-        emptyOutDir: true
+        emptyOutDir: true,
+        rollupOptions: {
+            output: {
+                entryFileNames: "admin-[name].[hash].js",
+                chunkFileNames: "admin-[name].[hash].js",
+                assetFileNames: ({ name }) => {
+                    return "admin-[name].[hash].[ext]";
+                },
+            },
+        },
     },
     clearScreen: false
 });

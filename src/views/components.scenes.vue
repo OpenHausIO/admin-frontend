@@ -103,6 +103,26 @@ export default defineComponent({
 
                 }
             });
+        },
+        abortScene(item) {
+            request(`/api/scenes/${item._id}/abort`, {
+                method: "POST"
+            }, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Scene "${item.name}" aborted`, {
+                        type: "success"
+                    });
+
+                }
+            });
         }
     },
 });
@@ -180,9 +200,13 @@ export default defineComponent({
                                 <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
                                     @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson">
                                     <template v-slot:custom>
-                                        <button type="button" class="btn btn-outline-secondary"
-                                            v-tooltip:bottom="'Trigger scene'" @click="triggerScene(item)">
+                                        <button type="button" class="btn btn-outline-secondary" tooltip="Trigger scene"
+                                            flow="down" @click="triggerScene(item)">
                                             <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" tooltip="Abort scene"
+                                            flow="down" @click="abortScene(item)">
+                                            <i class="fa-solid fa-eye-slash"></i>
                                         </button>
                                     </template>
                                 </ActionsButtons>

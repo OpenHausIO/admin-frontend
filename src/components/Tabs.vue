@@ -39,7 +39,7 @@ export default defineComponent({
         </ul>
         <!-- NAVIGATION -->
         <!-- CONTENT -->
-        <div class="tab-content" style="overflow-y: scroll !important">
+        <div class="tab-content">
             <div class="tab-pane fade" :class="{ 'active show': isActive(item.id) }" v-bind:key="item.id"
                 v-for="item in items">
                 <slot v-bind:id="item.id" v-bind:name="item.id"></slot>

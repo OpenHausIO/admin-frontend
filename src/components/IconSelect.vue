@@ -41,7 +41,7 @@ export default defineComponent({
     },
     mounted() {
         console.log("IconSelect mounted, do http reuqest!");
-        request(`${window.location.origin}/icons.json`, (err, data) => {
+        request("icons.json", (err, data) => {
             if (err) {
                 console.error(err);
             } else {

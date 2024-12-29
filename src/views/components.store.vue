@@ -12,6 +12,7 @@ import ActionsButtons from "@/components/ActionsButtons.vue";
 import EditorProperty from "@/components/EditorProperty.vue";
 import Tabs from "@/components/Tabs.vue";
 import JsonEditor from "@/components/JsonEditor.vue";
+import Modal from "@/components/Modal.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
@@ -24,7 +25,8 @@ export default defineComponent({
         ActionsButtons,
         EditorProperty,
         JsonEditor,
-        Tabs
+        Tabs,
+        Modal
     },
     data() {
         return {
@@ -39,7 +41,11 @@ export default defineComponent({
                     id: "add",
                 },*/
             ],
-            json: null
+            json: null,
+            settingsModal: {
+                show: false,
+                item: null
+            }
         };
     },
     computed: {
@@ -104,6 +110,19 @@ export default defineComponent({
             this.json = null;
             this.editItem = null;
             this.triggerUpdate(item);
+        },
+        settingsModalShow(item) {
+            this.settingsModal.item = item;
+            this.settingsModal.show = true;
+        },
+        settingsModalClose() {
+            this.settingsModal.item = null;
+            this.settingsModal.show = false;
+        },
+        settingsModalSave() {
+            this.triggerUpdate(this.settingsModal.item);
+            this.settingsModal.item = null;
+            this.settingsModal.show = false;
         }
     },
 });
@@ -113,7 +132,32 @@ export default defineComponent({
 <template>
     <div>
 
-        <JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
+        <!--<JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />-->
+
+        <Modal v-if="!!settingsModal.show" :visible="settingsModal.show" title="Settings" @close="settingsModalClose"
+            @confirm="settingsModalSave">
+            <template #body>
+
+                <div class="mb-3" v-for="config in settingsModal.item.config">
+                    <label for="inputWithButton" class="form-label">{{ config.name }}</label>
+                    <div class="input-group">
+
+                        <EditorProperty :enabled="true" :object="config" prop="value" :type="config.type" />
+
+                        <!--
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="fa-solid fa-unlock-keyhole"></i>
+                        </button>
+                        -->
+
+                    </div>
+                    <div class="form-text fst-italic">
+                        {{ config.description }}
+                    </div>
+                </div>
+
+            </template>
+        </Modal>
 
         <Tabs v-bind:items="tabItems">
             <template v-slot:overview>
@@ -121,8 +165,8 @@ export default defineComponent({
                     <thead>
                         <tr>
                             <th scope="col">#</th>
-                            <th scope="col">Config</th>
-                            <th scope="col">Values</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Configs</th>
                             <th scope="col">Timestamps</th>
                             <th scope="col" style="width: 10px">Actions</th>
                         </tr>
@@ -147,7 +191,7 @@ export default defineComponent({
                                                 :object="item.config[index]" prop="value" :type="config.type" />
 
                                         </td>
-                                        <td>({{ config.description }}) </td>
+                                        <!--<td>({{ config.description }}) </td>-->
                                     </tr>
                                 </table>
 
@@ -173,7 +217,14 @@ export default defineComponent({
                             <td>
                                 <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
                                     @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
-                                    @handleJson="handleJson" />
+                                    @handleJson="handleJson">
+                                    <template v-slot:custom>
+                                        <button type="button" class="btn btn-outline-secondary" tooltip="Show configs"
+                                            flow="down" @click="settingsModalShow(item)">
+                                            <i class="fa-solid fa-gears"></i>
+                                        </button>
+                                    </template>
+                                </ActionsButtons>
                             </td>
                         </tr>
                     </tbody>

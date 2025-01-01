@@ -66,6 +66,24 @@ export default defineComponent({
             this.json = null;
             this.editItem = null;
             this.triggerUpdate(item);
+        },
+        triggerWebhook(item) {
+            request(`/api/webhooks/${item._id}/trigger`, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err.message}`, {
+                        dismiss: false,
+                        type: "danger"
+                    });
+
+                } else {
+
+                    addNotification(`Triggered Webhook "${item.name}"`, {
+                        type: "success"
+                    });
+
+                }
+            });
         }
     },
 });
@@ -112,7 +130,14 @@ export default defineComponent({
                             </td>
                             <td>
                                 <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson" />
+                                    @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson">
+                                    <template v-slot:custom>
+                                        <button type="button" class="btn btn-outline-secondary"
+                                            tooltip="Trigger Webhook" flow="down" @click="triggerWebhook(item)">
+                                            <i class="fa-solid fa-link"></i>
+                                        </button>
+                                    </template>
+                                </ActionsButtons>
                             </td>
                         </tr>
                     </tbody>

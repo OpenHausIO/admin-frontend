@@ -47,35 +47,51 @@ export default defineComponent({
     methods: {
         onClose() {
 
+            if (typeof (this.localItem) !== "string") {
+                this.$emit("onClose", this.localItem);
+                return;
+            }
+
             let obj = null;
 
             try {
                 obj = JSON.parse(this.localItem);
             } catch (e) {
                 // ignore
+                console.warn("could not parse", e, this.localItem);
             } finally {
+                console.log("before onClose emit", obj);
                 this.$emit("onClose", obj);
             }
 
         },
         onConfirm() {
 
+            if (typeof (this.localItem) !== "string") {
+                this.$emit("onClose", this.localItem);
+                return;
+            }
+
             let obj = null;
 
             try {
                 obj = JSON.parse(this.localItem);
             } catch (e) {
                 // ignore
+                console.warn("could not parse", e, this.localItem);
             } finally {
+                console.log("before onConfirm emit", obj);
                 this.$emit("onConfirm", obj);
             }
 
         }
     },
+    /*
     watch: {
         item(newItem) {
             this.localItem = { ...newItem };
         }
     }
+    */
 });
 </script>

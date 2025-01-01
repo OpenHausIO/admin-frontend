@@ -107,7 +107,8 @@ export default {
 
 .modal-body {
     overflow: scroll;
-    max-height: 40cap;
+    max-height: 50cap;
+    height: 100%;
 }
 
 .modal-content {

@@ -132,7 +132,7 @@ export default defineComponent({
 <template>
     <div>
 
-        <!--<JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />-->
+        <JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
 
         <Modal v-if="!!settingsModal.show" :visible="settingsModal.show" title="Settings" @close="settingsModalClose"
             @confirm="settingsModalSave">

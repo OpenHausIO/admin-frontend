@@ -1,10 +1,11 @@
 <script>
 import { defineComponent } from "vue";
-import { request } from "../helper";
+import { request, calculateSHA256 } from "../helper";
 
 import Tabs from "@/components/Tabs.vue";
 import EditorProperty from "@/components/EditorProperty.vue";
 import ActionsButtons from "@/components/ActionsButtons.vue";
+import Modal from "@/components/Modal.vue";
 
 import JsonEditor from "@/components/JsonEditor.vue";
 import { addNotification } from "@/components/Notifications.vue";
@@ -18,65 +19,19 @@ export default defineComponent({
         JsonEditor,
         Tabs,
         EditorProperty,
-        ActionsButtons
+        ActionsButtons,
+        Modal
     },
     data() {
         return {
             editItem: null,
-            browse: [{
-                name: "Samsung TV",
-                url: "/plugins/oh-plg-samsungtv-v1.0.0.tgz",
-                author: "Marc Stirner",
-                version: 1.0,
-                description: "",
-                intents: [
-                    "ssdp",
-                    "endpoints",
-                    "devices"
-                ]
-            }, {
-                name: "Pioneer/Onky eISCP",
-                url: "",
-                author: "Marc Stirner",
-                version: 1.0,
-                description: "",
-                intents: [
-                    "ssdp",
-                    "endpoints",
-                    "devices"
-                ]
-            }, {
-                name: "Custom Lowboard driver",
-                url: "",
-                author: "Marc Stirner",
-                version: 1.0,
-                description: "",
-                intents: []
-            }, {
-                name: "Phoscon/RaspBee ZigBee plugin",
-                url: "/plugins/oh-plg-phoscon-v1.0.0.tgz",
-                author: "Marc Stirner",
-                version: 1.0,
-                description: "",
-                intents: [
-                    "ssdp",
-                    "endpoints",
-                    "devices"
-                ]
-            }].map((plg) => {
-                plg.description = `Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. 
-
-Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. 
-
-Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. 
-
-Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. 
-
-Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis. `;
-                return plg;
-            }),
+            browse: [],
             enabledEditFields: false,
-            json: null
+            json: null,
+            installModal: {
+                show: false,
+                data: {}
+            }
         };
     },
     computed: {
@@ -96,7 +51,8 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                 id: "browse"
             }];
 
-            if (settings.expertSettings) {
+            // disabled, even needed?!
+            if (settings.expertSettings && false) {
                 items.splice(1, 0, {
                     name: "Add",
                     id: "add",
@@ -207,16 +163,20 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
         handleJson(item) {
             this.json = item;
         },
-        createIntentsArray(item) {
+        createIntentsArray() {
             return [
                 "devices",
                 "endpoints",
+                "mdns",
+                "mqtt",
                 "plugins",
                 "rooms",
+                "scenes",
                 "ssdp",
                 "store",
                 "users",
                 "vault",
+                "webhoooks"
             ].map((intent) => {
                 return {
                     name: intent,
@@ -224,106 +184,96 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                 };
             });
         },
-        fetchPlugins() {
+        fetchPluginList() {
 
             fetch(`https://plugins.open-haus.io/`, {
-                mode: "no-cors",
-                redirect: 'follow'
+                redirect: "follow"
             }).then((resp) => {
-                console.log(resp);
                 return resp.json();
             }).then((data) => {
+
+                console.log("Plugin data", data)
+
                 this.browse = data;
             }).catch((err) => {
                 console.warn("Could not fetch plugin list: " + err);
             });
 
         },
-        installPlugin({ url, name, version, intents }) {
+        async fetchPluginFileContent(plugin) {
+            try {
 
-            console.log("Downmload url", url)
-
-            fetch(url, {
-                mode: 'no-cors',
-                redirect: 'follow'
-            }).then((resp) => {
-                console.log("download file resp", resp);
-                return resp.blob();
-            }).then(async (blob) => {
-
-                console.log("blob", blob)
-
-                // create plugin item
-                let data = await fetch("/api/plugins", {
-                    method: "PUT",
-                    headers: {
-                        "content-type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        name,
-                        version,
-                        intents
-                    })
-                }).then((resp) => {
-                    return resp.json();
+                let { file = null } = plugin.releases.find(({ version }) => {
+                    return plugin.version === version;
                 });
 
-                /*
-                addNotification({
-                  message: "Plugin item created",
-                  type: "info",
-                  showIcon: true,
-                  dismiss: {
-                    manually: true,
-                    automatically: true,
-                  },
-                  showDurationProgress: true,
-                  appearance: "dark",
-                });
-                */
+                if (!file) {
+                    console.warn("File/version not found in release array");
+                    return null;
+                }
 
-                console.log("Plugin item created", data)
-
-                // upload plugin content
-                await fetch(`/api/plugins/${data._id}/files`, {
-                    method: "PUT",
-                    headers: {
-                        "x-md5-checksum": "foo-bar-bz"
-                    },
-                    body: blob
+                let response = await fetch(`https://plugins.open-haus.io/files/${file}`, {
+                    redirect: "follow"
                 });
 
-                /*
-                addNotification({
-                  message: "Plugin content upload created",
-                  type: "info",
-                  showIcon: true,
-                  dismiss: {
-                    manually: true,
-                    automatically: true,
-                  },
-                  showDurationProgress: true,
-                  appearance: "dark",
-                });
-                */
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch file: ${response.statusText}`);
+                }
 
-                addNotification(`Plugin "${data.name}" installed`, {
-                    type: "success"
-                });
+                return await response.blob();
 
-            }).catch((err) => {
-                console.log("Could not downadsfasdfasdfasdfasfdload file", err)
+            } catch (err) {
+
+                console.warn("Could not fetch plugin file: " + err);
 
                 addNotification(`Error: ${err}`, {
                     type: "danger",
                     dismiss: false
                 });
 
+                return null;
+
+            }
+        },
+        async installPlugin(plugin) {
+
+            console.log("Download plugin", plugin);
+
+            let { close } = addNotification(`Download plugin "${plugin.name}"...`);
+
+            let release = plugin.releases.find(({ version }) => {
+                return plugin.version === version;
             });
 
+            let content = await this.fetchPluginFileContent(plugin);
+            let sha265 = await calculateSHA256(content);
+
+            console.log("File content", content, sha265 === release.checksum);
+
+            this.installModal.data = {
+                plugin,
+                sha265,
+                content,
+                release
+            };
+
+            this.installModal.show = true;
+            close();
+
         },
-        downloadPlugin(plg) {
-            window.open(plg.url)
+        downloadPlugin(plugin) {
+
+            let { file = null } = plugin.releases.find(({ version }) => {
+                return plugin.version === version;
+            });
+
+            if (!file) {
+                console.warn("File/version not found in release array");
+                return;
+            }
+
+            window.open(`https://plugins.open-haus.io/files/${file}`);
+
         },
         onClose() {
             this.json = null;
@@ -333,10 +283,80 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
             this.json = null;
             this.editItem = null;
             this.triggerUpdate(item);
+        },
+        handleInstallClose() {
+            this.installModal.data = null;
+            this.installModal.show = false;
+        },
+        handleInstallConfirm() {
+
+            console.log("Handle put request,")
+
+            let { name, intents, uuid, version } = this.installModal.data.plugin;
+            let body = this.installModal.data.content;
+
+            fetch("/api/plugins", {
+                method: "PUT",
+                headers: {
+                    "content-type": "application/json"
+                },
+                body: JSON.stringify({
+                    name,
+                    intents,
+                    uuid,
+                    version
+                })
+            }).then((resp) => {
+
+                if (!resp.ok) {
+                    throw new Error('Fehler beim Updaten des Plugins');
+                }
+
+                return resp.json();
+
+            }).then((item) => {
+                return fetch(`/api/plugins/${item._id}/files`, {
+                    method: "PUT",
+                    body
+                });
+            }).then((resp) => {
+
+                if (!resp.ok) {
+                    throw new Error('Fehler beim Hochladen der Plugin-Dateien');
+                }
+
+                return resp.json();
+
+            }).then((item) => {
+
+                console.log("Plugin installed", item);
+
+                addNotification(`Plugin "${item.name}" v${item.version} installed!<br />Start the plugin to apply changes`, {
+                    type: "success",
+                    dismiss: false
+                });
+
+                this.installModal.data = null;
+                this.installModal.show = false;
+
+            }).catch((err) => {
+
+                addNotification(`Error: ${err}`, {
+                    type: "danger",
+                    dismiss: false
+                });
+
+            });
+
+        },
+        isPluginInstalled(plg) {
+            return !!this.plugins.find((item) => {
+                return item.uuid === plg.uuid;
+            });
         }
     },
     mounted() {
-        this.fetchPlugins();
+        this.fetchPluginList();
     }
 });
 </script>
@@ -346,6 +366,98 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
     <div>
 
         <JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
+
+        <Modal :visible="installModal.show" title="Install Plugin" @close="handleInstallClose"
+            @confirm="handleInstallConfirm">
+            <template #body>
+
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-dark text-secondary"
+                            v-model="installModal.data.plugin.name" :readonly="!settings.expertSettings">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Version</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-dark text-secondary"
+                            v-model="installModal.data.plugin.version" :readonly="!settings.expertSettings">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Author</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-dark text-secondary"
+                            v-model="installModal.data.plugin.author" :readonly="!settings.expertSettings">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">UUID</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-dark text-secondary"
+                            v-model="installModal.data.plugin.uuid" :readonly="!settings.expertSettings">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <div class="input-group">
+                        <textarea type="text" class="form-control bg-dark text-secondary"
+                            v-bind:value="installModal.data.plugin.description" rows="5"
+                            :readonly="!settings.expertSettings">
+                        </textarea>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        Checksum
+                        <span class="badge bg-success"
+                            v-if="installModal.data.release.checksum === installModal.data.sha265">
+                            Verified
+                        </span>
+                        <span class="badge bg-danger" v-else>
+                            Invalid
+                        </span>
+                    </label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-dark text-secondary"
+                            v-model="installModal.data.release.checksum" readonly>
+                    </div>
+                </div>
+
+                <!--
+                <div class="mb-3">
+                    <label class="form-label">Intents</label>
+                    <div class="input-group">
+                        <ul>
+                            <li v-for="intent in installModal.data.plugin.intents">
+                                {{ intent }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            -->
+                <div class="mb-3">
+                    <label class="form-label">Intents</label>
+                    <EditorProperty :enabled="settings.expertSettings" :object="installModal.data.plugin" prop="intents"
+                        type="checkbox" :items="createIntentsArray()">
+                        <template v-slot:display>
+                            <ul style="padding-left: 1rem">
+                                <li v-bind:key="index" v-for="(intent, index) in installModal.data.plugin.intents">
+                                    {{ intent }}
+                                </li>
+                            </ul>
+                        </template>
+                    </EditorProperty>
+                </div>
+
+            </template>
+        </Modal>
 
         <Tabs v-bind:items="tabItems">
 
@@ -357,7 +469,7 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                             <th scope="col">#</th>
                             <th scope="col">Name</th>
                             <th scope="col">Version</th>
-                            <th scope="col">UUID</th>
+                            <th scope="col" v-if="settings.expertSettings">UUID</th>
                             <th scope="col">
                                 Intents <span v-if="editItem">(Granted)</span>
                             </th>
@@ -379,7 +491,7 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                                     :enabled="item._id === editItem && settings.expertSettings && enabledEditFields"
                                     :object="item" prop="version" type="text" />
                             </td>
-                            <td>
+                            <td v-if="settings.expertSettings">
 
                                 <EditorProperty
                                     :enabled="item._id === editItem && settings.expertSettings && enabledEditFields"
@@ -420,21 +532,21 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                                             v-on:click="handleStart(item)" :class="{
                                                 'text-muted': !item.enabled,
                                                 'border-secondary': !item.enabled,
-                                            }" v-tooltip:bottom="'Start Plugin'">
+                                            }" tooltip="Start Plugin" flow="down">
                                             <i class="fa-solid fa-power-off"></i>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger hide"
                                             :disabled="!item.enabled" v-on:click="handleStop(item)" :class="{
                                                 'text-muted': !item.enabled,
                                                 'border-secondary': !item.enabled,
-                                            }" v-tooltip:bottom="'Stop Plugin'">
+                                            }" tooltip="Stop Plugin" flow="down">
                                             <i class="fa-solid fa-power-off"></i>
                                         </button>
                                         <button type="button" class="btn btn-outline-warning hide"
                                             :disabled="!item.enabled" v-on:click="handleRestart(item)" :class="{
                                                 'text-muted': !item.enabled,
                                                 'border-secondary': !item.enabled,
-                                            }" v-tooltip:bottom="'Restart Plugin'">
+                                            }" tooltip="Restart Plugin" flow="down">
                                             <i class="fa-solid fa-arrow-rotate-right"></i>
                                         </button>
                                     </template>
@@ -448,7 +560,6 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
 
             <!-- ADD -->
             <template v-slot:add>
-
                 <div>
                     <div class="row">
                         <div class="col-6">
@@ -486,7 +597,6 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                     <thead>
                         <tr>
                             <th scope="col">Name</th>
-                            <th scope="col">Author</th>
                             <th scope="col">Version</th>
                             <th scope="col">Description</th>
                             <th scope="col">Intents</th>
@@ -495,15 +605,21 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                     </thead>
                     <tbody>
                         <tr v-bind:key="index" v-for="(plugin, index) in browse">
-                            <td>{{ plugin.name }}</td>
-                            <td>{{ plugin.author }}</td>
-                            <td>{{ plugin.version }}</td>
                             <td>
-
+                                {{ plugin.name }}
+                                <span class="badge badge-outline badge-success"
+                                    v-if="isPluginInstalled(plugin)">Installed</span>
+                            </td>
+                            <td>
+                                <select class="form-select w-auto" v-model="plugin.version">
+                                    <option v-for="release in plugin.releases">{{ release.version }}</option>
+                                </select>
+                            </td>
+                            <td>
                                 <textarea v-bind:value="plugin.description" readonly="true" rows="5"
-                                    class="w-100 text-white border-0"
+                                    class="form-control w-100 text-white border-0 p-1"
                                     style="background-color: transparent; resize: none;">
-                </textarea>
+                                </textarea>
                             </td>
                             <td>
                                 <ul class="ps-3">
@@ -514,15 +630,15 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-outline-success"
-                                        v-tooltip:bottom="'Install Plugin'" @click="installPlugin(plugin)">
+                                    <button type="button" class="btn btn-outline-success" tooltip="Install Plugin"
+                                        flow="down" @click="installPlugin(plugin)"
+                                        :disabled="isPluginInstalled(plugin)">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
-                                    <button type="button" class="btn btn-outline-secondary"
-                                        v-tooltip:bottom="'Download Plugin'" @click="downloadPlugin(plugin)">
+                                    <button type="button" class="btn btn-outline-secondary" tooltip="Download Plugin"
+                                        flow="down" @click="downloadPlugin(plugin)">
                                         <i class="fa-solid fa-download"></i>
                                     </button>
-
                                 </div>
                             </td>
                         </tr>

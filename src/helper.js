@@ -184,11 +184,20 @@ function itemWrapper(items, component) {
     return items;
 }
 
+async function calculateSHA256(blob) {
+    const arrayBuffer = await blob.arrayBuffer(); // Blob in ArrayBuffer umwandeln
+    const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer); // SHA-256-Hash berechnen
+    const hashArray = Array.from(new Uint8Array(hashBuffer)); // Buffer in Array umwandeln
+    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join(''); // Hex-String erstellen
+    return hashHex;
+}
+
 export {
     getItemById,
     getItemByProperty,
     promisfy,
     request,
     debounce,
-    itemWrapper
+    itemWrapper,
+    calculateSHA256
 };

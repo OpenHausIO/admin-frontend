@@ -257,7 +257,8 @@ export default defineComponent({
                     <div class="input-group">
                         <input :type="secret.visible ? 'text' : 'password'" class="form-control" v-model="secret.value"
                             :readonly="!secret.visible">
-                        <button class="btn btn-outline-secondary" type="button" @click="decryptSecret(secret)">
+                        <button class="btn btn-outline-secondary" type="button" @click="decryptSecret(secret)"
+                            tooltip="Decrypt/Edit" flow="left">
                             <i class="fa-solid fa-unlock-keyhole"></i>
                         </button>
                     </div>

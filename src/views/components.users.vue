@@ -183,8 +183,8 @@ export default defineComponent({
                         <tr v-bind:key="item._id" v-for="(item, index) in users">
                             <th scope="row">{{ index + 1 }}</th>
                             <td>
-                                <EditorProperty :enabled="item._id === editItem && settings.expertSettings"
-                                    :object="item" prop="name" type="text" />
+                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
+                                    type="text" />
                             </td>
                             <td>
                                 <EditorProperty :enabled="item._id === editItem && settings.expertSettings"
@@ -253,7 +253,7 @@ export default defineComponent({
                                     @handleJson="handleJson">
                                     <template v-slot:custom>
                                         <button type="button" class="btn btn-outline-warning" :disabled="index === 2"
-                                            v-tooltip:bottom="'Logout User'">
+                                            tooltip="Logout User" flow="down">
                                             <i class="fa-solid fa-right-from-bracket"></i>
                                         </button>
                                     </template>

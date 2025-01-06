@@ -4,6 +4,8 @@ import dateFormat from "dateformat";
 
 <script>
 import { defineComponent } from "vue";
+import { settingsStore } from "../store";
+const settings = settingsStore();
 
 import Tabs from "@/components/Tabs.vue";
 
@@ -15,12 +17,12 @@ export default defineComponent({
         return {
             records: [],
             colors: {
-                trace: "green",
-                verbose: "cyan",
-                debug: "gray",
-                info: "blue",
-                warn: "yellow",
-                error: "red",
+                trace: "text-success",
+                verbose: "text-secondary",
+                debug: "text-muted",
+                info: "text-primary",
+                warn: "text-warning",
+                error: "text-danger",
             },
             autoscrollEnabled: true,
         };
@@ -28,12 +30,12 @@ export default defineComponent({
     methods: {
         colorize(record, text) {
             let color = this.colors[record.level];
-            return `<span style="color: ${color}">${text}</span>`;
+            return `<span class="${color}">${text}</span>`;
         },
         format(record) {
             let ts = this.colorize(
                 record,
-                dateFormat(record.timestamp, "yyyy.mm.dd - HH:MM.ss.l")
+                dateFormat(record.timestamp, settings.dateformat)
             );
             let lvl = this.colorize(record, record.level);
             let name = this.colorize(record, record.name);
@@ -41,7 +43,11 @@ export default defineComponent({
         },
     },
     mounted() {
-        let ws = this.ws = new WebSocket(`ws://${window.location.host}/api/logs`);
+
+        let url = window.location.protocol === "https:" ? "wss://" : "ws://";
+        url += `${window.location.host}/api/logs`;
+
+        let ws = this.ws = new WebSocket(url);
 
         ws.onopen = () => {
             console.log("Logfile websocket opend");
@@ -79,7 +85,7 @@ export default defineComponent({
 
 <template>
     <div>
-        <div ref="logfilecontainer" style="max-height: 800px; overflow-x: scroll">
+        <div ref="logfilecontainer" style="max-height: 90vh; overflow-x: scroll">
             <div class="record" v-bind:key="index" v-for="(record, index) in records" v-html="format(record)"></div>
         </div>
         <hr />
@@ -92,9 +98,3 @@ export default defineComponent({
         </div>
     </div>
 </template>
-
-<style scope>
-.nav-link.active {
-    color: red !important;
-}
-</style>

@@ -224,32 +224,30 @@ export default defineComponent({
             <!-- OVERVIEW -->
             <!-- ADD-->
             <template v-slot:add>
-                <div>
-                    <div class="row">
-                        <div class="col-6">
-                            <form @submit.prevent="addRoom">
-                                <div class="form-group mb-2">
-                                    <label>Room Name</label>
-                                    <input type="text" name="name" class="form-control bg-dark text-white" />
-                                </div>
-                                <div class="form-group mb-2">
-                                    <label>Floor/Level</label>
-                                    <input type="number" name="floor" class="form-control bg-dark text-white" />
-                                </div>
-                                <div class="form-group mb-2">
-                                    <label>Number</label>
-                                    <input type="number" name="number" class="form-control bg-dark text-white" />
-                                </div>
-                                <div class="form-group mb-2">
-                                    <label>Icon</label>
-                                    <input type="text" name="icon" class="form-control bg-dark text-white"
-                                        value="fa-regular fa-lightbulb" />
-                                </div>
-                                <button type="submit" class="btn btn-outline-primary">
-                                    Save
-                                </button>
-                            </form>
-                        </div>
+                <div class="row">
+                    <div class="col-6">
+                        <form @submit.prevent="addRoom">
+                            <div class="form-group mb-2">
+                                <label>Room Name</label>
+                                <input type="text" name="name" class="form-control bg-dark text-white" />
+                            </div>
+                            <div class="form-group mb-2">
+                                <label>Floor/Level</label>
+                                <input type="number" name="floor" class="form-control bg-dark text-white" />
+                            </div>
+                            <div class="form-group mb-2">
+                                <label>Number</label>
+                                <input type="number" name="number" class="form-control bg-dark text-white" />
+                            </div>
+                            <div class="form-group mb-2">
+                                <label>Icon</label>
+                                <input type="text" name="icon" class="form-control bg-dark text-white"
+                                    value="fa-regular fa-lightbulb" />
+                            </div>
+                            <button type="submit" class="btn btn-outline-primary">
+                                Save
+                            </button>
+                        </form>
                     </div>
                 </div>
             </template>

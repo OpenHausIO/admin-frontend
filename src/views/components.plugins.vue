@@ -415,7 +415,7 @@ export default defineComponent({
 
                 <div class="mb-3">
                     <label class="form-label">
-                        Checksum
+                        Checksum (SHA-256)
                         <span class="badge bg-success"
                             v-if="installModal.data.release.checksum === installModal.data.sha265">
                             Verified

@@ -1,4 +1,5 @@
 import { addNotification } from "./components/Notifications.vue";
+import { sha256Hex } from "./sha-256.js";
 
 function promisfy(worker, cb) {
 
@@ -185,11 +186,26 @@ function itemWrapper(items, component) {
 }
 
 async function calculateSHA256(blob) {
-    const arrayBuffer = await blob.arrayBuffer(); // Blob in ArrayBuffer umwandeln
-    const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer); // SHA-256-Hash berechnen
-    const hashArray = Array.from(new Uint8Array(hashBuffer)); // Buffer in Array umwandeln
-    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join(''); // Hex-String erstellen
+
+    let hashHex = null;
+
+    if (crypto.subtle) {
+        // native browser implementation
+        // works only on HTTPs
+        // https://developer.mozilla.org/en-US/docs/Web/API/Crypto/subtle
+        const arrayBuffer = await blob.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+    } else {
+        // works also on HTTP
+        // "polyfill"
+        hashHex = sha256Hex(blob);
+    }
+
+
     return hashHex;
+
 }
 
 export {

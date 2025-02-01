@@ -8,7 +8,7 @@
         <!-- MODAL -->
         <div class="modal" tabindex="-1" :class="{ show: visible }" style="display: block"
             @keydown.esc="visible = false">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-lg" :class="{ 'modal-xl': xl }">
                 <div class="modal-content">
                     <div class="modal-header" :class="classes.header">
                         <slot name="header">
@@ -74,6 +74,10 @@ export default {
                 header: [],
                 footer: []
             }
+        },
+        xl: {
+            type: Boolean,
+            default: false
         }
     },
     emits: [

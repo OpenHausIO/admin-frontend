@@ -35,7 +35,7 @@ export default defineComponent({
                 title: "Endpoints",
                 icon: "fa-lightbulb ",
                 href: "/endpoints",
-                size: items.plugins.length
+                size: items.endpoints.length
             }, {
                 title: "Vaults",
                 icon: "fa-vault",

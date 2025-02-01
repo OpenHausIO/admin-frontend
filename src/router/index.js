@@ -75,11 +75,40 @@ const system = [{
     icon: "fa-solid fa-file",
     component: () => import("../views/system.logfiles.vue")
 }/*, {
-    path: "/system/information",
-    name: "Information",
+    path: "/system/environment",
+    name: "Environment Variables",
     icon: "fa-solid fa-circle-info",
-    component: () => import("../views/system.information.vue")
+    component: () => import("../views/system.environment.vue")
+}, {
+    path: "/system/versions",
+    name: "Software Verions",
+    icon: "fa-solid fa-circle-info",
+    component: () => import("../views/system.versions.vue")
+}/*, {
+    path: "/system/general",
+    name: "General",
+    icon: "",
+    component: () => import("../views/system.general.vue")
 }*/];
+
+
+const test = [{
+    path: "/test/selection-order",
+    name: "SelectionOrder",
+    component: () => import("../views/test.selection-order.vue")
+}, {
+    path: "/test/object-select",
+    name: "ObjectSelect",
+    component: () => import("../views/test.object-select.vue")
+}, {
+    path: "/test/data-table",
+    name: "DataTable",
+    component: () => import("../views/test.data-table.vue")
+}, {
+    path: "/test/alarm",
+    name: "DataTable",
+    component: () => import("../views/test.alarm.vue")
+}];
 
 
 const router = createRouter({
@@ -100,12 +129,18 @@ const router = createRouter({
     ...components,
     ...system,
     {
+        path: "/test",
+        component: () => import("../views/test.vue")
+    },
+    ...test,
+    {
         path: "/:pathMatch(.*)*",
         name: "NotFound",
         redirect: "/dashboard"
     }]
 });
 
+/*
 router.beforeEach((to, from, next) => {
     if (window.localStorage.getItem("x-auth-token")) {
 
@@ -183,11 +218,13 @@ router.beforeEach((to, from, next) => {
 
     }
 });
+*/
 
 export default router;
 
 export {
     router,
     components,
-    system
+    system,
+    test
 };

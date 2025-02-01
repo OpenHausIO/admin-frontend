@@ -86,7 +86,7 @@ export default defineComponent({
             items.add("mdns", {
                 name: name.value || null,
                 type: type.value || null,
-            }, (err) => {
+            }, (err, data) => {
                 if (err) {
 
                     addNotification(`Error: ${err || data.error}`, {

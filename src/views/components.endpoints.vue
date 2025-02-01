@@ -149,6 +149,7 @@ export default defineComponent({
                             <th scope="col">Name</th>
                             <th scope="col">Device</th>
                             <th scope="col">Room</th>
+                            <!--<th scope="col" v-if="settings.expertSettings">Labels</th>-->
                             <th scope="col">Timestamps</th>
                             <th scope="col" style="width: 10px">Enabled</th>
                             <th scope="col" style="width: 10px">Actions</th>
@@ -173,13 +174,15 @@ export default defineComponent({
                                     type="text" />
                             </td>
                             <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="device"
-                                    type="select" :items="devices">
+                                <EditorProperty :enabled="item._id === editItem && settings.expertSettings"
+                                    :object="item" prop="device" type="select" :items="devices">
                                     <template v-slot:display="{ value }">
                                         <span v-if="getItemById(devices, value)?.name">
                                             {{ getItemById(devices, value).name }}
                                         </span>
-                                        <span class="badge bg-danger" v-else>device not set</span>
+                                        <span class="badge badge-danger badge-outline badge-flash" v-else>
+                                            device not set
+                                        </span>
                                     </template>
                                 </EditorProperty>
                             </td>
@@ -191,6 +194,17 @@ export default defineComponent({
                                     </template>
                                 </EditorProperty>
                             </td>
+                            <!--
+                            <td v-if="settings.expertSettings">
+
+                                <ul class="px-3 m-0">
+                                    <li v-for="(label, index) in item.labels" v-key="index">
+                                        {{ label }}
+                                    </li>
+                                </ul>
+
+                            </td>
+                            -->
                             <td>
                                 <table>
                                     <tr>
@@ -234,23 +248,4 @@ tr.endpoint-disabled>*,
 tr.endpoint-disabled td * {
     color: var(--bs-gray-800);
 }
-
-/*
-.badge-flash {
-    animation: flashing 1s infinite;
-    background-color: transparent;
-}
-
-@keyframes flashing {
-
-    0% {
-        border: 2px solid #000;
-        background-color: red !important;
-    }
-
-    50% {
-        border-color: transparent;
-    }
-}
-*/
 </style>

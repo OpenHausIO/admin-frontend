@@ -10,6 +10,8 @@ import Modal from "@/components/Modal.vue";
 import JsonEditor from "@/components/JsonEditor.vue";
 import { addNotification } from "@/components/Notifications.vue";
 
+import semver from "semver";
+
 import { itemStore, settingsStore } from "../store.js";
 const items = itemStore();
 const settings = settingsStore();
@@ -185,7 +187,6 @@ export default defineComponent({
             });
         },
         fetchPluginList() {
-
             fetch(`https://plugins.open-haus.io/`, {
                 redirect: "follow"
             }).then((resp) => {
@@ -194,11 +195,28 @@ export default defineComponent({
 
                 console.log("Plugin data", data)
 
-                this.browse = data;
+                this.browse = data.map((obj) => {
+
+                    //let releases = this.sortVersions(obj);
+
+                    let item = this.plugins.find((item) => {
+                        return item.uuid === obj.uuid;
+                    });
+
+                    if (item) {
+                        obj.version = item.version;
+                    }
+
+                    //obj.version = releases[0].version;
+                    obj.actionType = "install";
+
+                    return obj;
+
+                });
+
             }).catch((err) => {
                 console.warn("Could not fetch plugin list: " + err);
             });
-
         },
         async fetchPluginFileContent(plugin) {
             try {
@@ -288,71 +306,175 @@ export default defineComponent({
             this.installModal.data = null;
             this.installModal.show = false;
         },
-        handleInstallConfirm() {
+        async handleInstallConfirm() {
+            return new Promise((resolve, reject) => {
 
-            console.log("Handle put request,")
+                console.log("Handle put request,")
 
-            let { name, intents, uuid, version } = this.installModal.data.plugin;
-            let body = this.installModal.data.content;
+                let { name, intents, uuid, version } = this.installModal.data.plugin;
+                let body = this.installModal.data.content;
 
-            fetch("/api/plugins", {
-                method: "PUT",
+                fetch("/api/plugins", {
+                    method: "PUT",
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        name,
+                        intents,
+                        uuid,
+                        version
+                    })
+                }).then((resp) => {
+
+                    if (!resp.ok) {
+                        throw new Error('Fehler beim Updaten des Plugins');
+                    }
+
+                    return resp.json();
+
+                }).then((item) => {
+
+                    return fetch(`/api/plugins/${item._id}/files?install=true`, {
+                        method: "PUT",
+                        body
+                    });
+
+                }).then((resp) => {
+
+                    if (!resp.ok) {
+                        throw new Error('Fehler beim Hochladen der Plugin-Dateien');
+                    }
+
+                    return resp.json();
+
+                }).then((item) => {
+
+                    console.log("Plugin installed", item);
+
+                    addNotification(`Plugin "${item.name}" v${item.version} installed!<br />Start the plugin to apply changes`, {
+                        type: "success",
+                        dismiss: false
+                    });
+
+                    this.installModal.data = null;
+                    this.installModal.show = false;
+
+                    resolve(item);
+
+                }).catch((err) => {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                    reject(err);
+
+                });
+            });
+        },
+        isPluginInstalled(plg) {
+
+            return !!this.plugins.find((item) => {
+                return item.uuid === plg.uuid;
+            });
+
+        },
+        isVersionInstalled(plg) {
+
+            let item = this.plugins.find((item) => {
+                return item.uuid === plg.uuid;
+            });
+
+            if (!item) {
+                return false;
+            }
+
+            return item.version === plg.version;
+
+        },
+        sortVersions(releases) {
+            return releases.sort((a, b) => {
+
+                const parseVersion = (version) => version.split('.').map(Number);
+
+                const [majorA, minorA, patchA] = parseVersion(a.version);
+                const [majorB, minorB, patchB] = parseVersion(b.version);
+
+                if (majorA !== majorB) return majorB - majorA;
+                if (minorA !== minorB) return minorB - minorA;
+
+                return patchB - patchA;
+
+            });
+        },
+        updateAvailable(plg) {
+
+            let item = this.plugins.find((item) => {
+                return item.uuid === plg.uuid;
+            });
+
+            // sort highes avaiable release version
+            let releases = this.sortVersions(plg.releases);
+
+            if (item && semver.gt(releases[0].version, item?.version)) {
+                return true;
+            }
+
+            return false;
+
+        },
+        versionChanged(plg) {
+
+            let item = this.plugins.find((item) => {
+                return item.uuid === plg.uuid;
+            });
+
+            if (!item) {
+                plg.actionType = "install";
+                return;
+            }
+
+            if (semver.gt(plg.version, item.version)) {
+                plg.actionType = "update";
+            } else if (semver.lt(plg.version, item.version)) {
+                plg.actionType = "downgrade";
+            } else {
+                plg.actionType = "install";
+            }
+
+            console.log("Plugin versio changed")
+
+        },
+        async changeVersion(plg) {
+
+            let item = this.plugins.find((item) => {
+                return item.uuid === plg.uuid;
+            });
+
+            await this.installPlugin(plg);
+            this.installModal.show = false;
+
+            await fetch(`/api/plugins/${item._id}/files`, {
+                method: "DELETE",
+                headers: {
+                    "content-type": "application/json"
+                }
+            });
+
+            await fetch(`/api/plugins/${item._id}`, {
+                method: "PATCH",
                 headers: {
                     "content-type": "application/json"
                 },
                 body: JSON.stringify({
-                    name,
-                    intents,
-                    uuid,
-                    version
+                    version: plg.version
                 })
-            }).then((resp) => {
-
-                if (!resp.ok) {
-                    throw new Error('Fehler beim Updaten des Plugins');
-                }
-
-                return resp.json();
-
-            }).then((item) => {
-                return fetch(`/api/plugins/${item._id}/files`, {
-                    method: "PUT",
-                    body
-                });
-            }).then((resp) => {
-
-                if (!resp.ok) {
-                    throw new Error('Fehler beim Hochladen der Plugin-Dateien');
-                }
-
-                return resp.json();
-
-            }).then((item) => {
-
-                console.log("Plugin installed", item);
-
-                addNotification(`Plugin "${item.name}" v${item.version} installed!<br />Start the plugin to apply changes`, {
-                    type: "success",
-                    dismiss: false
-                });
-
-                this.installModal.data = null;
-                this.installModal.show = false;
-
-            }).catch((err) => {
-
-                addNotification(`Error: ${err}`, {
-                    type: "danger",
-                    dismiss: false
-                });
-
             });
 
-        },
-        isPluginInstalled(plg) {
-            return !!this.plugins.find((item) => {
-                return item.uuid === plg.uuid;
-            });
+            await this.handleInstallConfirm();
+
         }
     },
     mounted() {
@@ -387,6 +509,7 @@ export default defineComponent({
                     </div>
                 </div>
 
+                <!--
                 <div class="mb-3">
                     <label class="form-label">Author</label>
                     <div class="input-group">
@@ -394,6 +517,7 @@ export default defineComponent({
                             v-model="installModal.data.plugin.author" :readonly="!settings.expertSettings">
                     </div>
                 </div>
+                -->
 
                 <div class="mb-3">
                     <label class="form-label">UUID</label>
@@ -598,6 +722,7 @@ export default defineComponent({
                         <tr>
                             <th scope="col">Name</th>
                             <th scope="col">Version</th>
+                            <th scope="col">Website</th>
                             <th scope="col">Description</th>
                             <th scope="col">Intents</th>
                             <th scope="col">Actions</th>
@@ -606,14 +731,38 @@ export default defineComponent({
                     <tbody>
                         <tr v-bind:key="index" v-for="(plugin, index) in browse">
                             <td>
-                                {{ plugin.name }}
-                                <span class="badge badge-outline badge-success"
-                                    v-if="isPluginInstalled(plugin)">Installed</span>
+                                <div>
+                                    {{ plugin.name }}
+                                </div>
+                                <div>
+                                    <span class="badge badge-outline badge-success me-1"
+                                        v-if="isPluginInstalled(plugin)">
+                                        Installed
+                                    </span>
+                                    <span class="badge badge-outline badge-warning me-1 hide">
+                                        Singed
+                                    </span>
+                                    <span class="badge badge-outline badge-warning me-1 hide">
+                                        Verified
+                                    </span>
+                                    <span class="badge badge-outline badge-primary me-1" v-if="updateAvailable(plugin)">
+                                        Update Available
+                                    </span>
+                                </div>
                             </td>
                             <td>
-                                <select class="form-select w-auto" v-model="plugin.version">
-                                    <option v-for="release in plugin.releases">{{ release.version }}</option>
+                                <select class="form-select w-auto" v-model="plugin.version"
+                                    @change="versionChanged(plugin)">
+                                    <option v-for="release in sortVersions(plugin.releases)">
+                                        {{ release.version }}
+                                    </option>
                                 </select>
+                            </td>
+                            <td>
+                                <a :href="plugin.website" target="_blank" class="icon-link">
+                                    Website
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </a>
                             </td>
                             <td>
                                 <textarea v-bind:value="plugin.description" readonly="true" rows="5"
@@ -630,15 +779,27 @@ export default defineComponent({
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
+
                                     <button type="button" class="btn btn-outline-success" tooltip="Install Plugin"
-                                        flow="down" @click="installPlugin(plugin)"
-                                        :disabled="isPluginInstalled(plugin)">
+                                        flow="down" :disabled="isPluginInstalled(plugin)"
+                                        v-if="plugin.actionType === 'install'" @click="installPlugin(plugin)">
                                         <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                    <button class="btn btn-outline-primary" v-if="plugin.actionType === 'update'"
+                                        @click="changeVersion(plugin)" :disabled="isVersionInstalled(plugin)"
+                                        tooltip="Update Plugin" flow="down">
+                                        <i class="fa-solid fa-arrow-up"></i>
+                                    </button>
+                                    <button class="btn btn-outline-primary" v-if="plugin.actionType === 'downgrade'"
+                                        @click="changeVersion(plugin)" :disabled="isVersionInstalled(plugin)"
+                                        tooltip="Downgrade Plugin" flow="down">
+                                        <i class="fa-solid fa-arrow-down"></i>
                                     </button>
                                     <button type="button" class="btn btn-outline-secondary" tooltip="Download Plugin"
                                         flow="down" @click="downloadPlugin(plugin)">
                                         <i class="fa-solid fa-download"></i>
                                     </button>
+
                                 </div>
                             </td>
                         </tr>
@@ -653,4 +814,8 @@ export default defineComponent({
     </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+a.icon-link i.fa-solid {
+    font-size: 8px;
+}
+</style>

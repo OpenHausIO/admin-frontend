@@ -255,8 +255,8 @@ export default defineComponent({
                 <div class="mb-3" v-for="secret in secretsModal.secrets">
                     <label for="inputWithButton" class="form-label">{{ secret.name }}</label>
                     <div class="input-group">
-                        <input :type="secret.visible ? 'text' : 'password'" class="form-control" v-model="secret.value"
-                            :readonly="!secret.visible">
+                        <input :type="secret.visible ? 'text' : 'password'" class="form-control bg-dark text-white"
+                            v-model="secret.value" :readonly="!secret.visible">
                         <button class="btn btn-outline-secondary" type="button" @click="decryptSecret(secret)"
                             tooltip="Decrypt/Edit" flow="left">
                             <i class="fa-solid fa-unlock-keyhole"></i>

@@ -145,7 +145,33 @@ export default defineComponent({
             this.json = null;
             this.editItem = null;
             this.triggerUpdate(item);
+        },
+        /*
+        handleLogout(item) {
+
+            request(`/api/users/${item._id}/logout`, {
+                method: "POST",
+            }, (err, data) => {
+                if (err || data.error) {
+
+                    console.warn("Could not logout user", err || data.error);
+
+                    addNotification(`Could not logut user "${item.name}"<br />${err || data.error}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`User "${item.name}" logged out`, {
+                        type: "success"
+                    });
+
+                }
+            });
+
         }
+        */
     },
     computed: {
         users() {
@@ -172,6 +198,7 @@ export default defineComponent({
                             <th scope="col">#</th>
                             <th scope="col">Name</th>
                             <th scope="col">E-Mail</th>
+                            <th scope="col" v-if="!!editItem">Password</th>
                             <th scope="col">Tokens</th>
                             <th scope="col">Timestamps</th>
                             <th scope="col" style="width: 10px">Admin</th>
@@ -189,6 +216,10 @@ export default defineComponent({
                             <td>
                                 <EditorProperty :enabled="item._id === editItem && settings.expertSettings"
                                     :object="item" prop="email" type="text" />
+                            </td>
+                            <td v-if="!!editItem">
+                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="password"
+                                    type="password" />
                             </td>
                             <td>
                                 <EditorProperty :enabled="item._id === editItem" :object="item" prop="tokens"
@@ -212,51 +243,55 @@ export default defineComponent({
                                     <tr>
                                         <td>Created:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.created, settings.dateformat) }}
+                                            {{ dateFormat(item.timestamps.created || 0, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Updated:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.updated, settings.dateformat) }}
+                                            {{ dateFormat(item.timestamps.updated || 0, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Login:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.login, settings.dateformat) }}
+                                            {{ dateFormat(item.timestamps.login || 0, settings.dateformat) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Logout:</td>
                                         <td>
-                                            {{ dateFormat(item.timestamps.logout, settings.dateformat) }}
+                                            {{ dateFormat(item.timestamps.logout || 0, settings.dateformat) }}
                                         </td>
                                     </tr>
                                 </table>
                             </td>
                             <td>
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" v-bind:checked="item.admin"
-                                        v-model="item.admin" />
+                                    <input class="form-check-input" type="checkbox" :disabled="!item.enabled"
+                                        v-bind:checked="item.admin" v-model="item.admin"
+                                        @change.lazy="triggerUpdate(item)" />
                                 </div>
                             </td>
                             <td>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"
-                                        v-model="item.enabled" />
+                                        v-model="item.enabled" v-on:click="item.admin = false"
+                                        @change.lazy="triggerUpdate(item)" />
                                 </div>
                             </td>
                             <td>
                                 <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
                                     @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
                                     @handleJson="handleJson">
+                                    <!--
                                     <template v-slot:custom>
-                                        <button type="button" class="btn btn-outline-warning" :disabled="index === 2"
-                                            tooltip="Logout User" flow="down">
+                                        <button type="button" class="btn btn-outline-warning" tooltip="Logout User"
+                                            flow="down" @click="handleLogout(item)">
                                             <i class="fa-solid fa-right-from-bracket"></i>
                                         </button>
                                     </template>
+                                    -->
                                 </ActionsButtons>
                             </td>
                         </tr>

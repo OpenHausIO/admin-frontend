@@ -22,7 +22,7 @@ app.use(router);
 if (![
     "localhost",
     "127.0.0.1"
-].includes(window.location.hostname)) {
+].includes(window.location.hostname) && false) {
     let noop = () => { };
     console = {
         log: noop,
@@ -102,7 +102,29 @@ Promise.all([
         };
 
         ws.onclose = () => {
+
             console.warn(`WebSocket connection ${ws.url} closed`);
+
+            addNotification(`<b>WebSocket connection disconnected!</b><br />Please reload the page to establish a connection again`, {
+                type: "danger",
+                dismiss: false,
+                actions: [{
+                    title: "Reload",
+                    handler: (event) => {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        window.location.reload();
+                    }
+                }, {
+                    title: "Close",
+                    handler: (event, notification) => {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        notification.close();
+                    }
+                }]
+            });
+
         };
 
         ws.onopen = () => {

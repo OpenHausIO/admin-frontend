@@ -1,5 +1,5 @@
 <template>
-    <TransitionGroup name="list" tag="ul" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    <TransitionGroup name="list" tag="ul" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
 
         <li v-for="(notification, index) in notifications" :key="index" @click="removeNotification(index)" class="mb-2"
             :class="{ 'auto-dismiss': notification.dismiss }">
@@ -23,6 +23,7 @@
 
 <script>
 import { defineComponent, reactive } from 'vue';
+import { v4 } from "uuid";
 
 const notifications = reactive([]);
 
@@ -38,7 +39,8 @@ const addNotification = (message, opts) => {
         if (notifications.length > 0) {
 
             let index = notifications.findIndex((n) => {
-                return /*n.message === opts.message &&*/ n.timestamp === opts.timestamp;
+                //return /*n.message === opts.message &&*/ n.timestamp === opts.timestamp;
+                return n.uuid === opts.uuid;
             });
 
             removeNotification(index);
@@ -66,7 +68,8 @@ const addNotification = (message, opts) => {
         stop,
         onClose: () => { },
         onStop: () => { },
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        uuid: v4()
     }, opts));
 
     notifications.push(opts);

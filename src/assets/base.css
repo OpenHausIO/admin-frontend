@@ -61,7 +61,18 @@ body {
     color: var(--bs-dark);
 }
 
+.badge-flash {
+    animation: flashing 1s infinite;
+    background-color: transparent;
+}
 
+@keyframes flashing {
+    50% {
+
+        border-color: transparent;
+        color: transparent
+    }
+}
 
 
 /*

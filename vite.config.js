@@ -13,10 +13,29 @@ const {
     BACKEND_PROTOCOL: "http"
 }, process.env);
 
+
+const redirect = () => ({
+    configureServer(server) {
+        server.middlewares.use("/user", (req, res, next) => {
+
+            res.writeHead(302, {
+                Location: 'http://localhost:3000/user/'
+            });
+
+            res.end();
+
+        });
+    },
+});
+
+
 // https://vitejs.dev/config/
 export default defineConfig({
     base: "/admin/",
-    plugins: [vue()],
+    plugins: [
+        vue(),
+        redirect()
+    ],
     resolve: {
         alias: {
             "@": fileURLToPath(new URL("./src", import.meta.url))

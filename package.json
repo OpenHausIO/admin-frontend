@@ -1,11 +1,13 @@
 {
-    "name": "vue-project",
-    "version": "0.0.0",
+    "name": "admin-frontend",
+    "version": "0.1.0",
     "scripts": {
         "dev": "vite --host",
         "build": "vite build",
         "preview": "vite preview --port 5051",
-        "build:docker": "docker build . -t openhaus/admin-frontend:latest"
+        "release": "grunt release",
+        "publish": "grunt publish",
+        "build:docker": "grunt build:docker"
     },
     "dependencies": {
         "@dafcoe/vue-notification": "^0.1.6",
@@ -18,6 +20,8 @@
         "dateformat": "^5.0.3",
         "json-editor-vue": "^0.17.3",
         "pinia": "^2.3.0",
+        "semver": "^7.6.3",
+        "uuid": "^11.0.5",
         "vue": "^3.2.31",
         "vue-router": "^4.0.12"
     },

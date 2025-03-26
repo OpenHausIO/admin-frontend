@@ -314,7 +314,7 @@ export default defineComponent({
                 let { name, intents, uuid, version } = this.installModal.data.plugin;
                 let body = this.installModal.data.content;
 
-                fetch("/api/plugins", {
+                request("/api/plugins", {
                     method: "PUT",
                     headers: {
                         "content-type": "application/json"
@@ -325,7 +325,7 @@ export default defineComponent({
                         uuid,
                         version
                     })
-                }).then((resp) => {
+                })/*.then((resp) => {
 
                     if (!resp.ok) {
                         throw new Error('Fehler beim Updaten des Plugins');
@@ -333,14 +333,19 @@ export default defineComponent({
 
                     return resp.json();
 
-                }).then((item) => {
+                })*/.then((item) => {
 
-                    return fetch(`/api/plugins/${item._id}/files?install=true`, {
+                    return request(`/api/plugins/${item._id}/files?install=true`, {
                         method: "PUT",
+                        headers: {
+                            "content-type": "application/octet-stream"
+                        },
                         body
                     });
 
-                }).then((resp) => {
+                })/*.then((resp) => {
+
+                    console.log("resp", resp)
 
                     if (!resp.ok) {
                         throw new Error('Fehler beim Hochladen der Plugin-Dateien');
@@ -348,7 +353,7 @@ export default defineComponent({
 
                     return resp.json();
 
-                }).then((item) => {
+                })*/.then((item) => {
 
                     console.log("Plugin installed", item);
 
@@ -456,14 +461,14 @@ export default defineComponent({
             await this.installPlugin(plg);
             this.installModal.show = false;
 
-            await fetch(`/api/plugins/${item._id}/files`, {
+            await request(`/api/plugins/${item._id}/files`, {
                 method: "DELETE",
                 headers: {
                     "content-type": "application/json"
                 }
             });
 
-            await fetch(`/api/plugins/${item._id}`, {
+            await request(`/api/plugins/${item._id}`, {
                 method: "PATCH",
                 headers: {
                     "content-type": "application/json"

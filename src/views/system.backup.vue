@@ -9,6 +9,7 @@ import { defineComponent } from 'vue';
 import Tabs from "@/components/Tabs.vue";
 import Modal from "@/components/Modal.vue";
 import { addNotification } from "@/components/Notifications.vue";
+import { request } from "../helper.js";
 
 export default defineComponent({
     components: {
@@ -66,8 +67,13 @@ export default defineComponent({
                 return `includes[]=${intent}`;
             }).join("&");
 
-            fetch(`/api/system/backup/export?${query}`, {
-                method: "POST"
+
+            // TODO: switch to request
+            request(`/api/system/backup/export?${query}`, {
+                method: "POST",
+                headers: {
+                    "content-type": "application/octet-stream"
+                }
             }).then(res => {
 
                 console.log("headers", res.headers)
@@ -78,7 +84,7 @@ export default defineComponent({
                     this.exportData.showModal = true;
                 }
 
-                return res.blob();
+                return res;
 
             }).then(blob => {
 
@@ -123,31 +129,20 @@ export default defineComponent({
                     headers["x-encryption-iv"] = keys.iv;
                 }
 
-                fetch(`/api/system/backup/import?${query}`, {
+                request(`/api/system/backup/import?${query}`, {
                     method: "POST",
                     headers,
                     body: this.importData.fileBuffer,
-                }).then((resp) => {
-                    if (resp.ok) {
+                }).then(() => {
 
-                        this.importData.fileBuffer = null;
-                        this.importData.keys.iv = null;
-                        this.importData.keys.key = null;
+                    this.importData.fileBuffer = null;
+                    this.importData.keys.iv = null;
+                    this.importData.keys.key = null;
 
-                        addNotification("Restore completed<br />Restart the application to apply changes", {
-                            type: "success"
-                        });
+                    addNotification("Restore completed<br />Restart the application to apply changes", {
+                        type: "success"
+                    });
 
-                    } else {
-
-                        console.warn("error while uploading file", resp);
-
-                        addNotification("Error while uploading", {
-                            type: "warning",
-                            dismiss: false
-                        });
-
-                    }
                 }).catch((err) => {
 
                     console.error("error restoring:", err)

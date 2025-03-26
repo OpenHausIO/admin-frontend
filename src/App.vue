@@ -104,13 +104,12 @@ export default defineComponent({
 
                     <li class="nav-item">
                         <Card>
-                            <a class="nav-link" href="/" @click="navigate">
+                            <a class="nav-link" href="/user/">
                                 <i class="fa-solid fa-user"></i>
                                 User Interface
                             </a>
                         </Card>
                     </li>
-
                     <!-- DASHBOARD & APP -->
 
                     <li class="nav-item">
@@ -151,7 +150,7 @@ export default defineComponent({
                     </RouterLink>
                     <!-- SYSTEM -->
 
-                    <li class="nav-item">
+                    <li class="nav-item hide">
                         <hr />
                     </li>
 

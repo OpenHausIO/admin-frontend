@@ -10,22 +10,24 @@ export default defineComponent({
     },
     data() {
         return {
-            pair: [],
-            data: {},
+            pair: {}
         };
     },
     mounted() {
-        request("/api/about", (err, data) => {
+        request("/api/system/info/environment", (err, data) => {
             if (err) {
+
                 console.log(err || data);
+
             } else {
-                this.data = data;
-                Object.keys(data.environment).forEach((key) => {
-                    this.pair.push({
-                        key,
-                        value: data.environment[key],
-                    });
+
+                Object.keys(data).forEach((key) => {
+                    this.pair[key] = {
+                        value: data[key],
+                        visible: false
+                    };
                 });
+
             }
         });
     },
@@ -37,10 +39,6 @@ export default defineComponent({
     <div>
         <h3>Environment variables</h3>
 
-        <div v-bind:key="index" v-for="(val, key, index) in data">
-            {{ key }} - {{ val }}
-        </div>
-
         <table class="table text-white">
             <thead>
                 <tr>
@@ -50,10 +48,24 @@ export default defineComponent({
                 </tr>
             </thead>
             <tbody>
-                <tr v-bind:key="item.key" v-for="(item, index) in pair">
+                <tr v-bind:key="key" v-for="(item, key, index) in pair">
                     <th scope="row">{{ index + 1 }}</th>
-                    <td>{{ item.key }}</td>
-                    <td>{{ item.value }}</td>
+                    <td>
+                        {{ key }}
+                    </td>
+                    <td>
+
+                        <div class="input-group">
+                            <input :type="item.visible ? 'text' : 'password'" class="form-control bg-dark text-white"
+                                v-model="item.value" :readonly="true">
+                            <button class="btn btn-outline-secondary" type="button"
+                                @click="item.visible = !item.visible" tooltip="Show Value" flow="left">
+                                <i class="fa-solid"
+                                    :class="{ 'fa-eye': !item.visible, 'fa-eye-slash': item.visible }"></i>
+                            </button>
+                        </div>
+
+                    </td>
                 </tr>
             </tbody>
         </table>

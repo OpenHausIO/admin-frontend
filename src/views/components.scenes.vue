@@ -37,10 +37,10 @@ export default defineComponent({
             tabItems: [{
                 name: "Overview",
                 id: "overview",
-            }, {
+            }/*, {
                 name: "Add",
                 id: "add"
-            }],
+            }*/],
             json: null,
             showMakrosModal: false,
             sourceOptions: [],

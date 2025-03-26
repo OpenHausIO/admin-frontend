@@ -31,10 +31,10 @@ export default defineComponent({
             tabItems: [{
                 name: "Overview",
                 id: "overview",
-            }, {
+            }/*, {
                 name: "Add",
                 id: "add"
-            }],
+            }*/],
             recordTypes: ["SRV", "PTR", "A", "AAAA"],
             json: null
         };

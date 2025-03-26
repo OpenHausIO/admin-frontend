@@ -49,7 +49,7 @@ function request(url, options, cb) {
     options = Object.assign({
         method: "GET",
         headers: {
-            "Content-Type": "application/json"
+            "content-type": "application/json"
         }
     }, options);
 
@@ -77,8 +77,18 @@ function request(url, options, cb) {
             ...options,
             signal: controller.signal
         }).then((response) => {
+
+            console.log("REsponse fetch", response)
+
             clearTimeout(id);
-            return response.json();
+
+            if (response.headers.get("content-type").match(/json/)) {
+                //console.log("content type container 'json'", response.headers);
+                return response.json();
+            }
+
+            return response.blob();
+
         }).then((data) => {
             done(null, data);
         }).catch((err) => {

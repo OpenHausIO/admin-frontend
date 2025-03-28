@@ -239,10 +239,10 @@ export default defineComponent({
                                 <label>Number</label>
                                 <input type="number" name="number" class="form-control bg-dark text-white" />
                             </div>
-                            <div class="form-group mb-2">
+                            <div class="form-group mb-2 hide">
                                 <label>Icon</label>
                                 <input type="text" name="icon" class="form-control bg-dark text-white"
-                                    value="fa-regular fa-lightbulb" />
+                                    value="fa-solid fa-question" />
                             </div>
                             <button type="submit" class="btn btn-outline-primary">
                                 Save

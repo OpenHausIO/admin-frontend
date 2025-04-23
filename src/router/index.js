@@ -65,6 +65,11 @@ const components = [{
 
 
 const system = [{
+    path: "/search",
+    name: "Search",
+    icon: "fa-solid fa-magnifying-glass",
+    component: () => import("../views/system.search.vue")
+}, {
     path: "/system/backup",
     name: "Backup import&export",
     icon: "fa-solid fa-file-zipper",

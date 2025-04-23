@@ -102,7 +102,10 @@ const itemStore = defineStore("items", {
                     console.log("put request", err || data);
 
                     if (err || data?.error) {
+
+                        cb(err || data?.error);
                         console.error(err || data?.error);
+
                     } else {
 
                         // NOTE: remove the .push?

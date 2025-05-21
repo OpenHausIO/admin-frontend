@@ -97,13 +97,12 @@ export default defineComponent({
                     <Card class="p-2">
 
                         <div class="float-start">
-                            <h3 class="text-black text-uppercase" style="--bs-text-opacity: 0.3">
+                            <h3 class=" text-uppercase" style="--bs-text-opacity: 0.3">
                                 {{ item.title }}
                             </h3>
                             <b>{{ item.size }}</b>
                         </div>
-                        <i class="float-end fa-solid fa-4x text-black" :class="item.icon"
-                            style="--bs-text-opacity: 0.3">
+                        <i class="float-end fa-solid fa-4x" :class="item.icon" style="--bs-text-opacity: 0.3">
                         </i>
 
                     </Card>

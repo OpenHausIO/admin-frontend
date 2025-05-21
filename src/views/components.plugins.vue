@@ -160,7 +160,28 @@ export default defineComponent({
             });
 
         },
-        handleStop() { },
+        handleStop(item) {
+
+            request(`/api/plugins/${item._id}/stop`, {
+                method: "POST",
+            }, (err) => {
+                if (err || item.error) {
+
+                    addNotification(`Error: ${err || item.error}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Plugin "${item.name}" stopped`, {
+                        type: "success"
+                    });
+
+                }
+            });
+
+        },
         handleRestart() { },
         handleJson(item) {
             this.json = item;
@@ -662,6 +683,13 @@ export default defineComponent({
                                                 'text-muted': !item.enabled,
                                                 'border-secondary': !item.enabled,
                                             }" tooltip="Start Plugin" flow="down">
+                                            <i class="fa-solid fa-power-off"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-dark hide"
+                                            :disabled="!item.enabled" v-on:click="handleStop(item)" :class="{
+                                                'text-muted': !item.enabled,
+                                                'border-secondary': !item.enabled,
+                                            }" tooltip="Stop Plugin" flow="down">
                                             <i class="fa-solid fa-power-off"></i>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger hide"

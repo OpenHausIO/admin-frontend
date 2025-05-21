@@ -1,0 +1,241 @@
+<script>
+import { defineComponent } from "vue";
+
+import ActionsButtons from "@/components/ActionsButtons.vue";
+import EditorProperty from "@/components/EditorProperty.vue";
+import IconSelect from "@/components/IconSelect.vue";
+import Tabs from "@/components/Tabs.vue";
+import JsonEditor from "@/components/JsonEditor.vue";
+import DataTable from "@/components/DataTable.vue";
+
+import { request } from "../helper";
+import { addNotification } from "@/components/Notifications.vue";
+
+import { itemStore } from "../store.js";
+const items = itemStore();
+
+export default defineComponent({
+    components: {
+        ActionsButtons,
+        EditorProperty,
+        IconSelect,
+        JsonEditor,
+        Tabs,
+        DataTable
+    },
+    data() {
+        return {
+            editItem: null,
+            tabItems: [{
+                name: "Overview",
+                id: "overview",
+            }, {
+                name: "Add",
+                id: "add",
+            }],
+            json: null,
+            dataTableCols: ["Icon", "Name", "Floor", "Number"]
+        };
+    },
+    methods: {
+        triggerUpdate(item) {
+            items.update("rooms", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Room "${item.name}" updated`, {
+                        type: "success"
+                    });
+
+                }
+            });
+        },
+        handleEdit(item) {
+            if (this.editItem === item._id) {
+                this.editItem = null;
+                this.triggerUpdate(item);
+            } else {
+                this.editItem = item._id;
+            }
+        },
+        handleInfo() { },
+        handleRemove(item) {
+            items.remove("rooms", item, (err) => {
+                if (err) {
+
+                    addNotification(`Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Room "${item.name}" deleted`, {
+                        type: "success"
+                    });
+
+                }
+            });
+        },
+        handleClone() { },
+        addRoom(event) {
+
+            let {
+                name,
+                floor,
+                number,
+                icon
+            } = event.target.elements;
+
+            console.log("ADD room", name, floor, number, icon)
+
+            items.add("rooms", {
+                name: name.value || null,
+                floor: floor.value || null,
+                number: number.value || null,
+                icon: icon.value || null
+            }, (err, data) => {
+                if (err) {
+
+                    addNotification(`Error: ${err || data.error}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Room "${data._id}" added`, {
+                        type: "success"
+                    });
+
+                    name.value = "";
+                    floor.value = "";
+                    number.value = "";
+                    icon.value = "";
+
+                }
+            });
+
+        },
+        handleJson(item) {
+            this.json = item;
+        },
+        onClose() {
+            this.json = null;
+            this.editItem = null;
+        },
+        onConfirm(item) {
+            this.json = null;
+            this.editItem = null;
+            this.triggerUpdate(item);
+        }
+    },
+    mounted() { },
+    computed: {
+        rooms() {
+            return items.rooms;
+        }
+    },
+});
+</script>
+
+
+<template>
+    <div>
+
+        <JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
+
+        <Tabs v-bind:items="tabItems">
+
+            <!-- OVERVIEW -->
+            <template v-slot:overview>
+                <DataTable :cols="dataTableCols" :rows="rooms" @edit="handleEdit">
+
+                    <!-- ICON -->
+                    <template v-slot:icon="{ obj }">
+                        <EditorProperty :enabled="obj._id === editItem" :object="obj" prop="icon" type="text">
+                            <template v-slot:editor="{ value }">
+                                <IconSelect :item="obj" :icon="value" />
+                            </template>
+                            <template v-slot:display="{ value }">
+                                <i :class="value"></i>
+                            </template>
+                        </EditorProperty>
+                    </template>
+                    <!-- ICON -->
+
+                    <!-- NAME -->
+                    <template v-slot:name="{ obj }">
+                        <EditorProperty :enabled="obj._id === editItem" :object="obj" prop="name" type="text" />
+                    </template>
+                    <!-- NAME -->
+
+                    <!-- FLOOR -->
+                    <template v-slot:floor="{ obj }">
+                        <EditorProperty :enabled="obj._id === editItem" :object="obj" prop="floor" type="number" />
+                    </template>
+                    <!-- FLOOR -->
+
+                    <!-- NUMBER -->
+                    <template v-slot:number="{ obj }">
+                        <EditorProperty :enabled="obj._id === editItem" :object="obj" prop="number" type="number" />
+                    </template>
+                    <!-- NUMBER -->
+
+                </DataTable>
+            </template>
+            <!-- OVERVIEW -->
+
+            <!-- ADD-->
+            <template v-slot:add>
+                <div class="row">
+                    <div class="col-6">
+                        <form @submit.prevent="addRoom">
+                            <div class="form-group mb-2">
+                                <label>Room Name</label>
+                                <input type="text" name="name" class="form-control bg-dark text-white" />
+                            </div>
+                            <div class="form-group mb-2">
+                                <label>Floor/Level</label>
+                                <input type="number" name="floor" class="form-control bg-dark text-white" />
+                            </div>
+                            <div class="form-group mb-2">
+                                <label>Number</label>
+                                <input type="number" name="number" class="form-control bg-dark text-white" />
+                            </div>
+                            <div class="form-group mb-2">
+                                <label>Icon</label>
+                                <input type="text" name="icon" class="form-control bg-dark text-white"
+                                    value="fa-regular fa-lightbulb" />
+                            </div>
+                            <button type="submit" class="btn btn-outline-primary">
+                                Save
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </template>
+            <!-- ADD-->
+        </Tabs>
+
+        <!--Rooms: {{ rooms }}-->
+    </div>
+</template>
+
+<style scope>
+.nav-link.active {
+    color: red !important;
+}
+
+/*.btn-group button.btn:not(:first-child):not(:last-child)*/
+.btn-group button.btn:not(:first-child) {
+    border-left-color: #000 !important;
+    /*border-right-color: #000 !important;*/
+}
+</style>

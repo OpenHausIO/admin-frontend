@@ -1,5 +1,5 @@
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 import { request, calculateSHA256 } from "../helper";
 
 import Tabs from "@/components/Tabs.vue";
@@ -33,6 +33,22 @@ export default defineComponent({
             installModal: {
                 show: false,
                 data: {}
+            },
+            uploadModal: {
+                show: false,
+                showUploadArea: true,
+                showInfoArea: false,
+                enableInstallButton: false,
+                file: null,
+                metadata: null,
+                form: {
+                    name: "",
+                    author: "",
+                    intents: [],
+                    version: "",
+                    uuid: "",
+                    description: ""
+                }
             }
         };
     },
@@ -49,7 +65,7 @@ export default defineComponent({
                 name: "Overview",
                 id: "overview",
             }, {
-                name: "Browse/Install",
+                name: "Browse",
                 id: "browse"
             }];
 
@@ -113,21 +129,21 @@ export default defineComponent({
                         actions: [{
                             title: "Restart now",
                             handler(event, notification) {
-
+    
                                 event.preventDefault();
                                 event.stopPropagation();
-
+    
                                 alert("Restart now clicked");
-
+    
                             }
                         }, {
                             title: "Later",
                             handler(event, { close }) {
-
+    
                                 event.preventDefault();
                                 event.stopPropagation();
                                 close();
-
+    
                             }
                         }]
                         */
@@ -348,7 +364,7 @@ export default defineComponent({
                     })
                 })/*.then((resp) => {
 
-                    if (!resp.ok) {
+                    if (!resp.ok || resp.status !== 200) {
                         throw new Error('Fehler beim Updaten des Plugins');
                     }
 
@@ -501,6 +517,167 @@ export default defineComponent({
 
             await this.handleInstallConfirm();
 
+        },
+        onFileChange(event) {
+            this.handleFiles(event.target.files);
+        },
+        triggerFileSelect() {
+            let fileInput = this.$refs.fileInput;
+            fileInput.click();
+        },
+        onDragOver() {
+            let dropArea = this.$refs.dropArea;
+            dropArea.classList.add('dragover');
+        },
+        onDragLeave() {
+            let dropArea = this.$refs.dropArea;
+            dropArea.classList.remove('dragover');
+        },
+        onDrop(event) {
+            let dropArea = this.$refs.dropArea;
+            dropArea.classList.remove('dragover');
+            this.handleFiles(event.dataTransfer.files);
+        },
+        async handleFiles([file = null]) {
+
+            console.log('Selected file:', file);
+
+            if (!file) {
+                return;
+            }
+
+            this.uploadModal.file = file;
+            this.uploadModal.showUploadArea = false;
+            this.uploadModal.showInfoArea = true;
+            this.uploadModal.enableInstallButton = true;
+
+            let arrayBuffer = await file.arrayBuffer();
+            let bytes = new Uint8Array(arrayBuffer);
+
+            if (file.type !== "application/x-compressed-tar" || bytes[0] !== 0x1f || bytes[1] !== 0x8b) {
+
+                addNotification(`File is not a gzip compress tar file!`, {
+                    type: "danger",
+                    dismiss: false
+                });
+
+                return this.uploadModalClose();
+
+            }
+
+            this.parseGzipExtraField(bytes);
+
+        },
+        readGzipExtraFields(bytes) {
+
+            let offset = 10; // fixed gzip header size
+            const extraFields = {};
+
+            // FEXTRA present
+            if (bytes[3] & 0x04) {
+
+                offset += 2;
+
+                const xlen = bytes[offset] | (bytes[offset + 1] << 8);
+                const end = offset + xlen;
+
+                while (offset + 4 <= end) {
+
+                    const si1 = bytes[offset];
+                    const si2 = bytes[offset + 1];
+                    const id = String.fromCharCode(si1, si2);
+
+                    const len = bytes[offset + 2] | (bytes[offset + 3] << 8);
+                    offset += 4;
+
+                    const data = bytes.slice(offset, offset + len);
+                    offset += len;
+
+                    extraFields[id] = {
+                        id,
+                        length: len,
+                        data,
+                    };
+
+                }
+
+            }
+
+            return extraFields;
+
+        },
+        parseGzipExtraField(bytes) {
+            if (bytes[3] & 0x04) {
+
+                let fields = this.readGzipExtraFields(bytes);
+
+                if (!("oh" in fields)) {
+                    return addNotification(`Plugin file has no valid metadata!`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+                }
+
+                // decode field data & parse json string
+                let { metadata } = JSON.parse(new TextDecoder().decode(fields.oh.data));
+                this.uploadModal.metadata = metadata;
+
+                this.uploadModal.form.name = metadata.name;
+                this.uploadModal.form.version = metadata.version;
+                this.uploadModal.form.intents = metadata.intents;
+                this.uploadModal.form.author = metadata.author;
+                this.uploadModal.form.uuid = metadata.uuid;
+                this.uploadModal.form.description = metadata.description;
+
+            } else {
+
+                addNotification(`Plugin file has no valid metadata!`, {
+                    type: "danger",
+                    dismiss: false
+                });
+
+            }
+        },
+        uploadModalClose() {
+
+            this.uploadModal.show = false;
+            this.uploadModal.showUploadArea = true;
+            this.uploadModal.showInfoArea = false;
+            this.uploadModal.enableInstallButton = false;
+            this.uploadModal.file = null;
+
+            this.uploadModal.form.name = "";
+            this.uploadModal.form.version = "";
+            this.uploadModal.form.intents = "";
+            this.uploadModal.form.author = "";
+            this.uploadModal.form.uuid = "";
+            this.uploadModal.form.description = "";
+
+        },
+        async uploadModalInstall() {
+
+            let { name, version } = this.uploadModal.form;
+
+            addNotification(`Installing Plugin "${name}" v${version}...`, {
+                type: "primary",
+                dismiss: false
+            });
+
+            let content = this.uploadModal.file; // gzip content
+            let sha265 = await calculateSHA256(content);
+
+            this.installModal.data = {
+                plugin: this.uploadModal.form, // { name, intents, uuid, version }
+                sha265,
+                content,
+                release: this.uploadModal.form.version // not needed in handleInstallConfirm
+            };
+
+            // handle http requests
+            // needed data is set above via installModal
+            await this.handleInstallConfirm();
+            this.uploadModalClose();
+
         }
     },
     mounted() {
@@ -609,7 +786,116 @@ export default defineComponent({
             </template>
         </Modal>
 
+        <Modal :visible="uploadModal.show" title="Upload Plugin" @close="uploadModalClose()">
+            <template #body>
+
+                <!-- UPLOAD AREA -->
+                <div v-if="uploadModal.showUploadArea">
+
+                    <input ref="fileInput" type="file" hidden @change="onFileChange" accept=".tgz" />
+
+                    <button class="btn btn-success w-100" @click="triggerFileSelect">
+                        Upload file
+                    </button>
+
+                    <div class="or-divider my-3">
+                        <span>or</span>
+                    </div>
+
+                    <div ref="dropArea" class="drop-area text-center" @dragover.prevent="onDragOver"
+                        @dragleave="onDragLeave" @drop.prevent="onDrop">
+                        <div v-if="!uploadModal.file">
+
+                            <p class="mb-0 fw-semibold">Drag & Drop your file here</p>
+                            <small class="text-muted">or click the button above</small>
+
+                        </div>
+                        <div v-else>
+
+                            {{ uploadModal.file.name }}
+
+                        </div>
+                    </div>
+
+                </div>
+                <!-- UPLOAD AREA -->
+
+                <!-- INFORMATION AREA-->
+                <div v-if="uploadModal.showInfoArea">
+
+                    <!--
+
+                    Size: {{ uploadModal.file.size }} bytes<br />
+                    File: {{ uploadModal.file.name }}
+
+                    <hr>
+
+                    {{ uploadModal.form }}
+
+                    <hr />
+                    -->
+
+                    <div class="form-group mb-2">
+                        <label>Name:</label>
+                        <input type="text" class="form-control bg-dark text-white w-100" v-model="uploadModal.form.name"
+                            readonly>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label>Version:</label>
+                        <input type="text" class="form-control bg-dark text-white w-100"
+                            v-model="uploadModal.form.version" readonly>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label>Author:</label>
+                        <input type="text" class="form-control bg-dark text-white w-100"
+                            v-model="uploadModal.form.author" readonly>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label>UUID:</label>
+                        <input type="text" class="form-control bg-dark text-white w-100" v-model="uploadModal.form.uuid"
+                            readonly>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label>Description:</label>
+                        <textarea class="form-control bg-dark text-white w-100" v-model="uploadModal.form.description"
+                            rows="4" readonly />
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label>Intents:</label>
+                        <ul>
+                            <li v-for="intent in uploadModal.form.intents">
+                                {{ intent }}
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+                <!-- INFORMATION AREA-->
+
+            </template>
+            <template #footer>
+
+                <button type="button" class="btn btn-outline-secondary" @click="uploadModalClose()">Close</button>
+                <button type="button" class="btn btn-outline-primary" @click="uploadModalInstall()"
+                    v-bind:disabled="!uploadModal.enableInstallButton">Install</button>
+
+            </template>
+        </Modal>
+
         <Tabs v-bind:items="tabItems">
+
+            <template v-slot:tabs>
+                <li class="nav-item">
+                    <a class="nav-link bg-dark" @click.prevent="uploadModal.show = true;">
+                        Upload
+                    </a>
+                </li>
+            </template>
 
             <!-- OVERVIEW-->
             <template v-slot:overview>
@@ -685,7 +971,7 @@ export default defineComponent({
                                             }" tooltip="Start Plugin" flow="down">
                                             <i class="fa-solid fa-power-off"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-dark hide"
+                                        <button type="button" class="btn btn-outline-warning hide"
                                             :disabled="!item.enabled" v-on:click="handleStop(item)" :class="{
                                                 'text-muted': !item.enabled,
                                                 'border-secondary': !item.enabled,
@@ -850,5 +1136,39 @@ export default defineComponent({
 <style scoped>
 a.icon-link i.fa-solid {
     font-size: 8px;
+}
+
+.drop-area {
+    width: 100%;
+    padding: 80px;
+    border: 2px dashed var(--bs-gray-500);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.drop-area.dragover {
+    border-color: var(--bs-blue);
+}
+
+.or-divider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.or-divider::before,
+.or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: #000;
+}
+
+.or-divider span {
+    padding: 0 12px;
+    white-space: nowrap;
 }
 </style>

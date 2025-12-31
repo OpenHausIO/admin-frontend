@@ -14,11 +14,13 @@ import IconSelect from "@/components/IconSelect.vue";
 import JsonEditor from "@/components/JsonEditor.vue";
 //import Modal from "@/components/Modal.vue";
 import SelectionOrder from "@/components/SelectionOrder.vue";
+import TimestampsTable from "@/components/TimestampsTable.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
 
 import { itemStore } from "../store.js";
+import { icon } from "@fortawesome/fontawesome-svg-core";
 const items = itemStore();
 
 export default defineComponent({
@@ -29,7 +31,8 @@ export default defineComponent({
         Tabs,
         JsonEditor,
         //Modal,
-        SelectionOrder
+        SelectionOrder,
+        TimestampsTable
     },
     data() {
         return {
@@ -37,10 +40,10 @@ export default defineComponent({
             tabItems: [{
                 name: "Overview",
                 id: "overview",
-            }/*, {
+            }, {
                 name: "Add",
                 id: "add"
-            }*/],
+            }],
             json: null,
             showMakrosModal: false,
             sourceOptions: [],
@@ -358,6 +361,34 @@ export default defineComponent({
             this.editItem = null;
             this.showMakrosModal = false;
 
+        },
+        addScene(event) {
+
+            let { name } = event.target.elements;
+
+            items.add("scenes", {
+                name: name.value || null,
+                icon: "fa-solid fa-clone"
+            }, (err, data) => {
+                if (err) {
+
+                    addNotification(`Error: ${err || data.error}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Scene "${data.name}" added`, {
+                        type: "success"
+                    });
+
+                    name.value = "";
+                    //icon.value = "";
+
+                }
+            });
+
         }
     }
 });
@@ -423,22 +454,24 @@ export default defineComponent({
                             <td>
 
                                 <table>
-                                    <tr>
-                                        <td>Running:</td>
-                                        <td> {{ item.states.running }} </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Aborted:</td>
-                                        <td> {{ item.states.aborted }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Finished:</td>
-                                        <td> {{ item.states.finished }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Index:</td>
-                                        <td>{{ item.states.index }}</td>
-                                    </tr>
+                                    <tbody>
+                                        <tr>
+                                            <td>Running:</td>
+                                            <td> {{ item.states.running }} </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Aborted:</td>
+                                            <td> {{ item.states.aborted }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Finished:</td>
+                                            <td> {{ item.states.finished }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Index:</td>
+                                            <td>{{ item.states.index }}</td>
+                                        </tr>
+                                    </tbody>
                                 </table>
 
                             </td>
@@ -453,37 +486,15 @@ export default defineComponent({
                             </td>
                             -->
                             <td>
-                                <table>
-                                    <tr>
-                                        <td>Created:</td>
-                                        <td> {{ dateFormat(item.timestamps.created || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Updated:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.updated || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Started:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.started || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Aborted:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.aborted || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Finished:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.finished || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                </table>
+
+                                <TimestampsTable :data="item.timestamps" :mappings="{
+                                    'created': 'Created',
+                                    'updated': 'Updated',
+                                    'started': 'Started',
+                                    'aborted': 'Aborted',
+                                    'finished': 'Finished'
+                                }" />
+
                             </td>
                             <td>
                                 <div class="form-check form-switch">
@@ -513,34 +524,20 @@ export default defineComponent({
             <template v-slot:add>
 
                 <div class="row mt-3">
-                    <div clasS="col">
+                    <div clasS="col-6">
                         <form @submit.prevent="addScene">
                             <div class="form-group mb-2">
                                 <label>Name</label>
                                 <input type="text" name="name" class="form-control bg-dark text-white" />
                             </div>
-                            <div class="form-group mb-2">
-                                <label>Floor/Level</label>
-                                <button @click="openAddModal('commands')">Add Commands</button>
-                            </div>
-                            <div class="form-group mb-2">
-                                <label>Number</label>
-                                <input type="number" name="number" class="form-control bg-dark text-white" />
-                            </div>
-                            <div class="form-group mb-2">
+                            <div class="form-group mb-2 hide">
                                 <label>Icon</label>
-                                <input type="text" name="icon" class="form-control bg-dark text-white"
-                                    value="fa-regular fa-lightbulb" />
+                                <input type="text" name="icon" class="form-control bg-dark text-white" />
                             </div>
                             <button type="submit" class="btn btn-outline-primary">
                                 Save
                             </button>
                         </form>
-                    </div>
-                    <div class="col">
-
-
-
                     </div>
                 </div>
 

@@ -14,6 +14,8 @@ import IconSelect from "@/components/IconSelect.vue";
 import Tabs from "@/components/Tabs.vue";
 import JsonEditor from "@/components/JsonEditor.vue";
 import Modal from "@/components/Modal.vue";
+import LabelsInput from "@/components/LabelsInput.vue";
+import TimestampsTable from "@/components/TimestampsTable.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
@@ -28,7 +30,9 @@ export default defineComponent({
         EditorProperty,
         JsonEditor,
         Tabs,
-        Modal
+        Modal,
+        LabelsInput,
+        TimestampsTable
     },
     data() {
         return {
@@ -149,8 +153,8 @@ export default defineComponent({
                             <th scope="col">Name</th>
                             <th scope="col">Device</th>
                             <th scope="col">Room</th>
-                            <!--<th scope="col" v-if="settings.expertSettings">Labels</th>-->
-                            <th scope="col">Timestamps</th>
+                            <th scope="col" style="width: 200px">Labels</th>
+                            <!--<th scope="col" style="width: 10px">Timestamps</th>-->
                             <th scope="col" style="width: 10px">Enabled</th>
                             <th scope="col" style="width: 10px">Actions</th>
                         </tr>
@@ -194,32 +198,22 @@ export default defineComponent({
                                     </template>
                                 </EditorProperty>
                             </td>
-                            <!--
-                            <td v-if="settings.expertSettings">
+                            <td>
 
-                                <ul class="px-3 m-0">
-                                    <li v-for="(label, index) in item.labels" v-key="index">
-                                        {{ label }}
-                                    </li>
-                                </ul>
+                                <LabelsInput :data="item.labels" :edit="item._id === editItem"
+                                    @changed="(data) => { item.labels = data; }" />
+
+                            </td>
+                            <!--
+                            <td>
+
+                                <TimestampsTable :data="item.timestamps" :mappings="{
+                                    'created': 'Created',
+                                    'updated': 'Updated'
+                                }" />
 
                             </td>
                             -->
-                            <td>
-                                <table>
-                                    <tr>
-                                        <td>Created:</td>
-                                        <td> {{ dateFormat(item.timestamps.created || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Updated:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.updated || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
                             <td>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"

@@ -11,6 +11,7 @@ import ActionsButtons from "@/components/ActionsButtons.vue";
 import EditorProperty from "@/components/EditorProperty.vue";
 import Tabs from "@/components/Tabs.vue";
 import JsonEditor from "@/components/JsonEditor.vue";
+import TimestampsTable from "@/components/TimestampsTable.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
@@ -23,7 +24,8 @@ export default defineComponent({
         ActionsButtons,
         EditorProperty,
         JsonEditor,
-        Tabs
+        Tabs,
+        TimestampsTable
     },
     data() {
         return {
@@ -31,6 +33,9 @@ export default defineComponent({
             tabItems: [{
                 name: "Overview",
                 id: "overview",
+            }, {
+                name: "Add",
+                id: "add"
             }],
             json: null
         };
@@ -84,6 +89,59 @@ export default defineComponent({
 
                 }
             });
+        },
+        addWebhook(event) {
+
+            let { name } = event.target.elements;
+
+            items.add("webhooks", {
+                name: name.value || null,
+            }, (err, data) => {
+                if (err) {
+
+                    addNotification(`Error: ${err || data.error}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Webhook "${data.name}" added`, {
+                        type: "success"
+                    });
+
+                    name.value = "";
+                    //icon.value = "";
+
+                }
+            });
+
+        },
+        generateURL(item) {
+
+            let { hostname, port } = window.location;
+            return `http://${hostname}:${port}/api/webhooks/${item._id}/trigger`;
+
+        },
+        async copyURL(item) {
+            try {
+
+                let url = this.generateURL(item);
+                await navigator.clipboard.writeText(url);
+
+                addNotification(`URL for Webhook "${item.name}" copied!`, {
+                    type: "success"
+                });
+
+            } catch (err) {
+
+                addNotification(`Error, could not copy URL: ${err}`, {
+                    type: "danger",
+                    dismiss: false
+                });
+
+                console.error('Error:', err);
+            }
         }
     },
 });
@@ -114,24 +172,22 @@ export default defineComponent({
                                     type="text" />
                             </td>
                             <td>
-                                <table>
-                                    <tr>
-                                        <td>Created:</td>
-                                        <td> {{ dateFormat(item.timestamps.created || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Updated:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.updated || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                </table>
+
+                                <TimestampsTable :data="item.timestamps" :mappings="{
+                                    'created': 'Created',
+                                    'updated': 'Updated',
+                                    'triggered': 'Triggered'
+                                }" />
+
                             </td>
                             <td>
                                 <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
                                     @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson">
                                     <template v-slot:custom>
+                                        <a :href="generateURL(item)" class="btn btn-outline-secondary"
+                                            tooltip="Copy Webhook URL" flow="down" @click.prevent="copyURL(item)">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                        </a>
                                         <button type="button" class="btn btn-outline-secondary"
                                             tooltip="Trigger Webhook" flow="down" @click="triggerWebhook(item)">
                                             <i class="fa-solid fa-link"></i>
@@ -143,6 +199,29 @@ export default defineComponent({
                     </tbody>
                 </table>
             </template>
+            <template v-slot:add>
+
+                <div class="row mt-3">
+                    <div clasS="col-6">
+                        <form @submit.prevent="addWebhook">
+                            <div class="form-group mb-2">
+                                <label>Name</label>
+                                <input type="text" name="name" class="form-control bg-dark text-white" />
+                            </div>
+                            <button type="submit" class="btn btn-outline-primary">
+                                Save
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </template>
         </Tabs>
     </div>
 </template>
+
+<style scoped>
+a.btn-outline-secondary {
+    border-left-color: #000 !important;
+}
+</style>

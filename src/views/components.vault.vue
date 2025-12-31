@@ -12,6 +12,7 @@ import EditorProperty from "@/components/EditorProperty.vue";
 import Tabs from "@/components/Tabs.vue";
 import JsonEditor from "@/components/JsonEditor.vue";
 import Modal from "@/components/Modal.vue";
+import TimestampsTable from "@/components/TimestampsTable.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
@@ -25,7 +26,8 @@ export default defineComponent({
         EditorProperty,
         JsonEditor,
         Tabs,
-        Modal
+        Modal,
+        TimestampsTable
     },
     data() {
         return {
@@ -142,6 +144,15 @@ export default defineComponent({
         async decryptSecret(secret) {
             try {
 
+                if (secret.visible) {
+
+                    secret.visible = false;
+                    secret.value = Date.now();
+
+                    return;
+
+                }
+
                 let { _id } = this.secretsModal.item;
                 let { value } = await request(`/api/vault/${_id}/secrets/${secret._id}/decrypt`, {
                     method: "POST"
@@ -218,6 +229,8 @@ export default defineComponent({
 
             Promise.all(requests).then(() => {
 
+                this.secretsModal.show = false;
+
                 addNotification(`Secrets saved!`, {
                     type: "success"
                 });
@@ -259,7 +272,8 @@ export default defineComponent({
                             v-model="secret.value" :readonly="!secret.visible">
                         <button class="btn btn-outline-secondary" type="button" @click="decryptSecret(secret)"
                             tooltip="Decrypt/Edit" flow="left">
-                            <i class="fa-solid fa-unlock-keyhole"></i>
+                            <i class="fa-solid fa-unlock" v-if="secret.visible"></i>
+                            <i class="fa-solid fa-lock" v-if="!secret.visible"></i>
                         </button>
                     </div>
                     <div class="form-text fst-italic">
@@ -290,21 +304,10 @@ export default defineComponent({
                             </td>
                             <td>
 
-                                <table>
-                                    <tr>
-                                        <td>Created:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.created, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Updated:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.updated, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                </table>
-
+                                <TimestampsTable :data="item.timestamps" :mappings="{
+                                    'created': 'Created',
+                                    'updated': 'Updated'
+                                }" />
 
                             </td>
                             <td>

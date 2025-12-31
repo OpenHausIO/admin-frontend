@@ -13,6 +13,7 @@ import EditorProperty from "@/components/EditorProperty.vue";
 import IconSelect from "@/components/IconSelect.vue";
 import Tabs from "@/components/Tabs.vue";
 import JsonEditor from "@/components/JsonEditor.vue";
+import LabelsInput from "@/components/LabelsInput.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
@@ -26,7 +27,8 @@ export default defineComponent({
         ActionsButtons,
         EditorProperty,
         JsonEditor,
-        Tabs
+        Tabs,
+        LabelsInput
     },
     data() {
         return {
@@ -129,7 +131,7 @@ export default defineComponent({
                             <th scope="col">Manufacturer</th>
                             <th scope="col">Model</th>
                             <th scope="col">Room</th>
-                            <!--<th scope="col" v-if="settings.expertSettings">Timestamps</th>-->
+                            <th scope="col" style="width:300px">Labels</th>
                             <th scope="col" style="width: 10px">Enabled</th>
                             <th scope="col" style="width: 10px">Actions</th>
                         </tr>
@@ -170,25 +172,12 @@ export default defineComponent({
                                     </template>
                                 </EditorProperty>
                             </td>
-                            <!--
-                            <td v-if="settings.expertSettings">
+                            <td>
 
-                                <table>
-                                    <tr>
-                                        <td>Created:</td>
-                                        <td> {{ dateFormat(item.timestamps.created || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Updated:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.updated || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                </table>
+                                <LabelsInput :data="item.labels" :edit="item._id === editItem"
+                                    @changed="(data) => { item.labels = data; }" />
 
                             </td>
--->
                             <td>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"

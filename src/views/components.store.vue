@@ -13,6 +13,7 @@ import EditorProperty from "@/components/EditorProperty.vue";
 import Tabs from "@/components/Tabs.vue";
 import JsonEditor from "@/components/JsonEditor.vue";
 import Modal from "@/components/Modal.vue";
+import TimestampsTable from "@/components/TimestampsTable.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
@@ -26,7 +27,8 @@ export default defineComponent({
         EditorProperty,
         JsonEditor,
         Tabs,
-        Modal
+        Modal,
+        TimestampsTable
     },
     data() {
         return {
@@ -183,35 +185,27 @@ export default defineComponent({
                             <td>
 
                                 <table>
-                                    <tr v-bind:key="index" v-for="(config, index) in item.config">
-                                        <td>{{ config.key }} =</td>
-                                        <td>
+                                    <tbody>
+                                        <tr v-bind:key="index" v-for="(config, index) in item.config">
+                                            <td>{{ config.key }} =</td>
+                                            <td>
 
-                                            <EditorProperty :enabled="item._id === editItem"
-                                                :object="item.config[index]" prop="value" :type="config.type" />
+                                                <EditorProperty :enabled="item._id === editItem"
+                                                    :object="item.config[index]" prop="value" :type="config.type" />
 
-                                        </td>
-                                        <!--<td>({{ config.description }}) </td>-->
-                                    </tr>
+                                            </td>
+                                            <!--<td>({{ config.description }}) </td>-->
+                                        </tr>
+                                    </tbody>
                                 </table>
 
                             </td>
                             <td>
 
-                                <table>
-                                    <tr>
-                                        <td>Created:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.created, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Updated:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.updated, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                </table>
+                                <TimestampsTable :data="item.timestamps" :mappings="{
+                                    'created': 'Created',
+                                    'updated': 'Updated'
+                                }" />
 
                             </td>
                             <td>

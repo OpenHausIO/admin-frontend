@@ -11,6 +11,7 @@ import ActionsButtons from "@/components/ActionsButtons.vue";
 import EditorProperty from "@/components/EditorProperty.vue";
 import Tabs from "@/components/Tabs.vue";
 import JsonEditor from "@/components/JsonEditor.vue";
+import TimestampsTable from "@/components/TimestampsTable.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
@@ -23,7 +24,8 @@ export default defineComponent({
         ActionsButtons,
         EditorProperty,
         JsonEditor,
-        Tabs
+        Tabs,
+        TimestampsTable
     },
     data() {
         return {
@@ -162,25 +164,13 @@ export default defineComponent({
 </td>
 -->
                             <td>
-                                <table>
-                                    <tr>
-                                        <td>Created:</td>
-                                        <td> {{ dateFormat(item.timestamps.created || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Updated:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.updated || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Announced:</td>
-                                        <td>
-                                            {{ dateFormat(item.timestamps.announced || 0, settings.dateformat) }}
-                                        </td>
-                                    </tr>
-                                </table>
+
+                                <TimestampsTable :data="item.timestamps" :mappings="{
+                                    'created': 'Created',
+                                    'updated': 'Updated',
+                                    'announced': 'Announced'
+                                }" />
+
                             </td>
                             <td>
                                 <ActionsButtons :showEdit="true" :showRemove="true" :item="item"

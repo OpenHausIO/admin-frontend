@@ -36,6 +36,7 @@ export default defineComponent({
                 <a class="nav-link bg-dark" @click.prevent="setActive(item.id)" :class="{ active: isActive(item.id) }"
                     v-bind:href="item.id">{{ item.name }}</a>
             </li>
+            <slot name="tabs"></slot>
         </ul>
         <!-- NAVIGATION -->
         <!-- CONTENT -->
@@ -56,8 +57,9 @@ export default defineComponent({
 }
 */
 
-.nav-item,
-.nav-link {
+:deep(.nav-item),
+:deep(.nav-link) {
     border-color: #000 !important;
+    cursor: pointer;
 }
 </style>

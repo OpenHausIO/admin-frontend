@@ -64,22 +64,22 @@ const components = [{
 }];
 
 
-const system = [{
+const system = [/*{
     path: "/search",
     name: "Search",
     icon: "fa-solid fa-magnifying-glass",
     component: () => import("../views/system.search.vue")
-}, {
-    path: "/system/backup",
-    name: "Backup import&export",
-    icon: "fa-solid fa-file-zipper",
-    component: () => import("../views/system.backup.vue")
-}, {
-    path: "/system/logfiles",
-    name: "Logfiles",
-    icon: "fa-solid fa-file",
-    component: () => import("../views/system.logfiles.vue")
-}/*, {
+},*/ {
+        path: "/system/backup",
+        name: "Backup",
+        icon: "fa-solid fa-file-zipper",
+        component: () => import("../views/system.backup.vue")
+    }, {
+        path: "/system/logfiles",
+        name: "Logfiles",
+        icon: "fa-solid fa-file",
+        component: () => import("../views/system.logfiles.vue")
+    }/*, {
     path: "/system/environment",
     name: "Environment Variables",
     icon: "fa-solid fa-circle-info",
@@ -94,7 +94,12 @@ const system = [{
     name: "General",
     icon: "",
     component: () => import("../views/system.general.vue")
-}*/];
+}, {
+        path: "/system/prune",
+        name: "Prune",
+        icon: "fa-solid fa-broom",
+        component: () => import("../views/system.prune.vue")
+    }*/];
 
 
 const test = [{
@@ -111,7 +116,7 @@ const test = [{
     component: () => import("../views/test.data-table.vue")
 }, {
     path: "/test/alarm",
-    name: "DataTable",
+    name: "Alarm",
     component: () => import("../views/test.alarm.vue")
 }];
 
@@ -138,6 +143,15 @@ const router = createRouter({
         component: () => import("../views/test.vue")
     },
     ...test,
+    {
+        path: "/embedded",
+        props: (route) => {
+            return {
+                src: route.query.src
+            };
+        },
+        component: () => import("../views/embedded.vue")
+    },
     {
         path: "/:pathMatch(.*)*",
         name: "NotFound",

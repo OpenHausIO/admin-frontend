@@ -1,6 +1,7 @@
 <script setup>
 import { settingsStore } from "../store.js";
 const settings = settingsStore();
+import { setPrecent, show, hide, fadeOut } from "../components/Progressbar.vue";
 </script>
 
 <script>
@@ -51,6 +52,23 @@ export default defineComponent({
         };
     },
     methods: {
+        openSSEprogress() {
+
+            const eventSource = new EventSource(`/api/system/backup/progress`);
+
+            eventSource.onmessage = (event) => {
+
+                const { precent = 0 } = JSON.parse(event.data);
+                setPrecent(Math.floor(precent));
+
+            };
+
+            eventSource.onerror = (error) => {
+                fadeOut();
+                eventSource.close();
+            };
+
+        },
         handleCloseExport() {
             this.exportData.keys = {
                 key: null,
@@ -67,6 +85,9 @@ export default defineComponent({
                 return `includes[]=${intent}`;
             }).join("&");
 
+            // receive pgroess events
+            // update progress bar
+            //this.openSSEprogress();
 
             // TODO: switch to request
             request(`/api/system/backup/export?${query}`, {
@@ -128,6 +149,10 @@ export default defineComponent({
                     headers["x-encryption-key"] = keys.key;
                     headers["x-encryption-iv"] = keys.iv;
                 }
+
+                // receive pgroess events
+                // update progress bar
+                //this.openSSEprogress();
 
                 request(`/api/system/backup/import?${query}`, {
                     method: "POST",

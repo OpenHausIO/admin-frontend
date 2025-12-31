@@ -71,7 +71,8 @@ function request(url, options, cb) {
     return promisfy((done) => {
 
         let controller = new AbortController();
-        let id = setTimeout(() => controller.abort(), 10000);
+        //let id = setTimeout(() => controller.abort(), 10000);
+        let id = null;
 
         fetch(url, {
             ...options,

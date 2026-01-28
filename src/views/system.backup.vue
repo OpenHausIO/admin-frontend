@@ -1,7 +1,6 @@
 <script setup>
 import { settingsStore } from "../store.js";
 const settings = settingsStore();
-import { setPrecent, show, hide, fadeOut } from "../components/Progressbar.vue";
 </script>
 
 <script>
@@ -11,6 +10,8 @@ import Tabs from "@/components/Tabs.vue";
 import Modal from "@/components/Modal.vue";
 import { addNotification } from "@/components/Notifications.vue";
 import { request } from "../helper.js";
+
+import { setPrecent, fadeOut, data } from "../components/Progressbar.vue";
 
 export default defineComponent({
     components: {
@@ -48,13 +49,18 @@ export default defineComponent({
                     key: null,
                     iv: null
                 }
-            }
+            },
+            eventSource: null
         };
     },
     methods: {
+        /*
         openSSEprogress() {
 
-            const eventSource = new EventSource(`/api/system/backup/progress`);
+            data.color = "primary";
+
+            let token = localStorage.getItem("x-auth-token");
+            const eventSource = new EventSource(`/api/system/backup/progress?x-auth-token=${token}`);
 
             eventSource.onmessage = (event) => {
 
@@ -69,6 +75,30 @@ export default defineComponent({
             };
 
         },
+        */
+        openSSEprogress() {
+
+            // Vorherige Verbindung schließen, falls vorhanden
+            if (this.eventSource) {
+                this.eventSource.close();
+            }
+
+            data.color = "primary";
+            let token = localStorage.getItem("x-auth-token");
+            this.eventSource = new EventSource(`/api/system/backup/progress?x-auth-token=${token}`);
+
+            this.eventSource.onmessage = (event) => {
+                const { precent = 0 } = JSON.parse(event.data);
+                setPrecent(Math.floor(precent));
+            };
+
+            this.eventSource.onerror = (error) => {
+                fadeOut();
+                this.eventSource.close();
+                this.eventSource = null;
+            };
+
+        },
         handleCloseExport() {
             this.exportData.keys = {
                 key: null,
@@ -78,6 +108,10 @@ export default defineComponent({
         },
         download() {
 
+            addNotification("Prepare backup process.<br />Collecting files...", {
+                type: "primary"
+            });
+
             let { encrypt, includes, encode } = this.exportData;
             let query = `encrypt=${encrypt}&encode=${encode}&`;
 
@@ -85,20 +119,26 @@ export default defineComponent({
                 return `includes[]=${intent}`;
             }).join("&");
 
-            // receive pgroess events
-            // update progress bar
-            //this.openSSEprogress();
+            let blobUrl = null;
 
-            // TODO: switch to request
             request(`/api/system/backup/export?${query}`, {
                 method: "POST",
-                headers: {
-                    "content-type": "application/octet-stream"
-                }
             }).then(res => {
 
-                console.log("headers", res.headers)
+                if (res.status === 200) {
 
+                    addNotification("Backup process started<br />This may take a while. Do not close/leave this page!", {
+                        type: "primary"
+                    });
+
+                    // receive pgroess events
+                    // update progress bar
+                    this.openSSEprogress();
+
+                }
+
+                // FIXME: This is broken, beacuse blob is returned and not the response object from fetch
+                // Uncaught (in promise) TypeError: can't access property "get", o.headers is undefined
                 if (encrypt) {
                     this.exportData.keys.key = res.headers.get("x-encryption-key");
                     this.exportData.keys.iv = res.headers.get("x-encryption-iv");
@@ -107,9 +147,13 @@ export default defineComponent({
 
                 return res;
 
+            }).then((res) => {
+
+                return res.blob();
+
             }).then(blob => {
 
-                let blobUrl = URL.createObjectURL(blob);
+                blobUrl = URL.createObjectURL(blob);
                 let a = document.createElement("a");
 
                 a.href = blobUrl;
@@ -120,9 +164,37 @@ export default defineComponent({
                 document.body.removeChild(a);
                 URL.revokeObjectURL(blobUrl);
 
-                addNotification("Backup file download", {
-                    type: "success"
+                addNotification(`Backup file "${a.download}" downloaded`, {
+                    type: "success",
+                    dismiss: false
                 });
+
+            }).catch(async (err) => {
+
+                if (blobUrl) {
+                    URL.revokeObjectURL(blobUrl);
+                    blobUrl = null;
+                }
+
+                if (err.response.status === 423) {
+
+                    let res = await err.response.json();
+
+                    addNotification(`Operation "${res.progress.operation}" in progress.<br />Backup process could not be started`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    console.error("Couldn not start backup process", err)
+
+                    addNotification(`Could not start backup process.<br />Error: ${err.message}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                }
 
             });
 
@@ -152,7 +224,7 @@ export default defineComponent({
 
                 // receive pgroess events
                 // update progress bar
-                //this.openSSEprogress();
+                this.openSSEprogress();
 
                 request(`/api/system/backup/import?${query}`, {
                     method: "POST",
@@ -165,7 +237,8 @@ export default defineComponent({
                     this.importData.keys.key = null;
 
                     addNotification("Restore completed<br />Restart the application to apply changes", {
-                        type: "success"
+                        type: "success",
+                        dismiss: false
                     });
 
                 }).catch((err) => {
@@ -186,6 +259,10 @@ export default defineComponent({
             }
         },
         handleFileChange(event) {
+
+            addNotification("Restore process started<br />This may take a while. Do not close/leave this page!", {
+                type: "primary"
+            });
 
             const file = event.target.files[0];
 
@@ -221,6 +298,12 @@ export default defineComponent({
         handleCloseImport() {
             this.importData.showModal = false;
             this.handleFileUpload();
+        }
+    },
+    beforeUnmount() {
+        if (this.eventSource) {
+            this.eventSource.close();
+            this.eventSource = null;
         }
     }
 });
@@ -258,7 +341,7 @@ export default defineComponent({
                 </label>
             </div>
 
-            <div class="form-check form-switch">
+            <div class="form-check form-switch hide">
                 <label>
                     <input class="form-check-input" type="checkbox" v-model="exportData.encrypt" />
                     Encrypt *.tgz archive

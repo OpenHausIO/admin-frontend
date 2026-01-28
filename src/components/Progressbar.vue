@@ -1,8 +1,7 @@
 <template>
-    <div class="progress border-0" role="progressbar" style="z-index: 9999;" :class="{ 'fade-out': fadingOut }"
-        @animationend="handleAnimationEnd" v-if="show">
-        <div class="progress-bar" :style="'width: ' + precent + '%'" :class="barClass">
-        </div>
+    <div class="progress border-0" role="progressbar" :class="{ 'fade-out': fadingOut }"
+        @animationend="handleAnimationEnd" v-if="show" :style="cssVars">
+        <div class="progress-bar" :style="'width: ' + precent + '%'" :class="barClass"></div>
     </div>
 </template>
 
@@ -15,7 +14,12 @@ const data = reactive({
     fadingOut: false,
     color: "primary",
     animation: true,
-    fadeout: true
+    fadeout: true,
+    cssVars: {
+        "--shadow-vertical-length": "1px",
+        "--shadow-blur-radius": "5px",
+        "z-index": "9999"
+    }
 });
 
 const setPrecent = (int) => {
@@ -91,10 +95,12 @@ export {
     background-color: rgba(0, 0, 0, 0.8);
     z-index: 999999;
     pointer-events: none;
+    overflow: visible;
 }
 
 .progress-bar {
-    box-shadow: 0px 0px 5px 0px var(--bs-blue);
+    position: relative;
+    overflow: hidden;
     transition: width 0.2s linear, background-color 0.4s ease, box-shadow 0.4s ease;
 }
 
@@ -103,23 +109,23 @@ export {
 }
 
 .shadow-primary {
-    box-shadow: 0 0 5px var(--bs-primary);
+    box-shadow: 0 var(--shadow-vertical-length) var(--shadow-blur-radius) var(--bs-primary);
 }
 
 .shadow-success {
-    box-shadow: 0 0 5px var(--bs-success);
+    box-shadow: 0 var(--shadow-vertical-length) var(--shadow-blur-radius) var(--bs-success);
 }
 
 .shadow-danger {
-    box-shadow: 0 0 5px var(--bs-danger);
+    box-shadow: 0 var(--shadow-vertical-length) var(--shadow-blur-radius) var(--bs-danger);
 }
 
 .shadow-warning {
-    box-shadow: 0 0 5px var(--bs-warning);
+    box-shadow: 0 var(--shadow-vertical-length) var(--shadow-blur-radius) var(--bs-warning);
 }
 
 .shadow-info {
-    box-shadow: 0 0 5px var(--bs-info);
+    box-shadow: 0 var(--shadow-vertical-length) var(--shadow-blur-radius) var(--bs-info);
 }
 
 @keyframes slideUpFade {
@@ -129,6 +135,32 @@ export {
 
     to {
         opacity: 0;
+    }
+}
+
+.progress-bar.animated:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -50%;
+    /* Start links außerhalb */
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(120deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-20deg);
+    animation: shine 1s linear infinite;
+}
+
+@keyframes shine {
+    0% {
+        left: -50%;
+    }
+
+    100% {
+        left: 100%;
     }
 }
 </style>

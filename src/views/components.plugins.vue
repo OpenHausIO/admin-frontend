@@ -9,6 +9,7 @@ import Modal from "@/components/Modal.vue";
 
 import JsonEditor from "@/components/JsonEditor.vue";
 import { addNotification } from "@/components/Notifications.vue";
+import { setPrecent, fadeOut, data } from "../components/Progressbar.vue";
 
 import semver from "semver";
 
@@ -348,6 +349,8 @@ export default defineComponent({
 
                 console.log("Handle put request,")
 
+
+
                 let { name, intents, uuid, version } = this.installModal.data.plugin;
                 let body = this.installModal.data.content;
 
@@ -371,6 +374,8 @@ export default defineComponent({
                     return resp.json();
 
                 })*/.then((item) => {
+
+                    this.openSSEprogress();
 
                     return request(`/api/plugins/${item._id}/files?install=true`, {
                         method: "PUT",
@@ -677,6 +682,26 @@ export default defineComponent({
             // needed data is set above via installModal
             await this.handleInstallConfirm();
             this.uploadModalClose();
+
+        },
+        openSSEprogress() {
+
+            data.color = "primary";
+            let token = localStorage.getItem("x-auth-token")
+
+            const eventSource = new EventSource(`/api/plugins/progress?x-auth-token=${token}`);
+
+            eventSource.onmessage = (event) => {
+
+                const { precent = 0 } = JSON.parse(event.data);
+                setPrecent(Math.floor(precent));
+
+            };
+
+            eventSource.onerror = (error) => {
+                fadeOut();
+                eventSource.close();
+            };
 
         }
     },
@@ -1070,7 +1095,7 @@ export default defineComponent({
                                 </div>
                             </td>
                             <td>
-                                <select class="form-select w-auto" v-model="plugin.version"
+                                <select class="form-select w-auto bg-transparent text-white" v-model="plugin.version"
                                     @change="versionChanged(plugin)">
                                     <option v-for="release in sortVersions(plugin.releases)">
                                         {{ release.version }}

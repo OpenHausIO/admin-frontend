@@ -73,27 +73,12 @@ If you use the backend in a container or the "Quick-Start" docker example, its n
 This is a User Interface for the HTTP backend API.<br />
 Its basicly a GUI for the [postman collection](https://github.com/OpenHausIO/backend/blob/dev/postman.json).
 
-> The "Admin frontend" is a early work in progress project, that doesn't get the love it needs.
-> Use Postman with the collection instead to access the full functionality. 
-
 - [Postman](https://www.postman.com/)
 - [Collection](https://raw.githubusercontent.com/OpenHausIO/backend/dev/postman.json)
 
 ## Screenshots
-![Dashboard](./docs/img/dashboard.png)
---
-![Rooms](./docs/img/rooms.png)
---
-![Devices](./docs/img/devices.png)
---
-![Endpoints](./docs/img/endpoints.png)
---
-![Plugins](./docs/img/plugins.png)
---
-![Plugins](./docs/img/plugins-install.png)
---
-![Users](./docs/img/users.png)
---
-![Vault](./docs/img/vault.png)
---
-![SSDP](./docs/img/ssdp.png)
+![Img1](./docs/img/img-1.png)
+![Img2](./docs/img/img-2.png)
+![Img3](./docs/img/img-3.png)
+![Img4](./docs/img/img-4.png)
+![Img5](./docs/img/img-5.png)

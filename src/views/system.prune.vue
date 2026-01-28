@@ -1,12 +1,8 @@
-<script setup>
-import dateFormat from "dateformat";
-import { settingsStore } from "../store.js";
-const settings = settingsStore();
-</script>
-
 <script>
 import { defineComponent } from "vue";
 import Modal from "@/components/Modal.vue";
+import { request } from "../helper.js";
+import { addNotification } from "../components/Notifications.vue";
 
 export default defineComponent({
     components: {
@@ -17,14 +13,62 @@ export default defineComponent({
             modal: {
                 show: false
             },
-            includes: []
+            includes: [],
+            enablePruneButton: false
         };
     },
     methods: {
+        openSSEprogress() {
+
+            data.color = "primary";
+
+            let token = localStorage.getItem("x-auth-token");
+            const eventSource = new EventSource(`/api/system/prune/progress?x-auth-token=${token}`);
+
+            eventSource.onmessage = (event) => {
+
+                const { precent = 0 } = JSON.parse(event.data);
+                setPrecent(Math.floor(precent));
+
+            };
+
+            eventSource.onerror = (error) => {
+                fadeOut();
+                eventSource.close();
+            };
+
+        },
         onPrune() {
 
-            console.log("Do http prune request", this.includes)
-            this.modal.show = false;
+            addNotification("System pruning started.<br />This may take a while");
+
+            let targets = this.includes.map((target) => {
+                return `includes[]=${target}`;
+            }).join("&");
+
+            request(`/api/system/prune?${targets}`, {
+                method: "DELETE"
+            }, (err, result) => {
+
+                if (result.success) {
+
+                    addNotification("System pruned!<br />Restart to apply changes", {
+                        type: "success",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    addNotification(`Could not prune system<br />${err || result.error}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                }
+
+                this.modal.show = false;
+
+            });
 
         }
     }
@@ -35,167 +79,70 @@ export default defineComponent({
 <template>
     <div>
 
-        <Modal v-if="!!modal.show" :visible="modal.show" title="Secrets">
+        <Modal v-if="!!modal.show" :visible="modal.show" title="Are you really sure?!">
             <template #body>
 
-                Are you sure you want to prune the system?
-                <hr />
+                This operation will prune/wipe the installation!<br />
+                Are you really sure you want to <u><b>permanent</b></u> delete:
 
-                {{ includes }}
+                <ul class="my-3">
+                    <li v-for="target in includes">
+                        {{ target }}
+                    </li>
+                </ul>
+
+                <i class="fa-solid fa-triangle-exclamation text-danger"></i>
+                &nbsp;
+                <u>This cannot be cancelled or undone!</u>
+                &nbsp;
+                <i class="fa-solid fa-triangle-exclamation text-danger"></i>
+
+                <div class="form-check form-switch mt-3">
+                    <label>
+                        <input class="form-check-input" type="checkbox" v-model="enablePruneButton" />
+                        I understand, and know what im doing.
+                    </label>
+                </div>
 
             </template>
             <template #footer>
 
                 <button type="button" class="btn btn-outline-secondary" @click="modal.show = false">Close</button>
-                <button type="button" class="btn btn-outline-danger" @click="onPrune">Prune</button>
+                <button type="button" class="btn btn-outline-danger" @click="onPrune"
+                    :disabled="!enablePruneButton">Prune</button>
 
             </template>
         </Modal>
 
         <div class="form-check form-switch">
-
             <label>
-                Components
-                <input class="form-check-input" type="checkbox" v-model="includes" value="components" />
-
-            </label>
-
-        </div>
-
-        <hr />
-
-
-        <div class="container-fluid">
-            <div class="row">
-
-                <div class="col">
-
-                    <div class="form-check form-switch">
-                        <label>
-                            Devices
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/devices" />
-                        </label>
-                    </div>
-
-                    <div class="form-check form-switch">
-                        <label>
-                            Endpoints
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/endpoints" />
-                        </label>
-                    </div>
-
-                    <div class="form-check form-switch">
-                        <label>
-                            MDNS
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/mdns" />
-                        </label>
-                    </div>
-
-                    <div class="form-check form-switch">
-                        <label>
-                            SSDP
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/ssdp" />
-                        </label>
-                    </div>
-
-                </div>
-
-                <div class="col">
-
-                    <div class="form-check form-switch">
-                        <label>
-                            Devices
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/devices" />
-                        </label>
-                    </div>
-
-                    <div class="form-check form-switch">
-                        <label>
-                            Endpoints
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/endpoints" />
-                        </label>
-                    </div>
-
-                    <div class="form-check form-switch">
-                        <label>
-                            MDNS
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/mdns" />
-                        </label>
-                    </div>
-
-                    <div class="form-check form-switch">
-                        <label>
-                            SSDP
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/ssdp" />
-                        </label>
-                    </div>
-
-                </div>
-
-                <div class="col">
-
-                    <div class="form-check form-switch">
-                        <label>
-                            Devices
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/devices" />
-                        </label>
-                    </div>
-
-                    <div class="form-check form-switch">
-                        <label>
-                            Endpoints
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/endpoints" />
-                        </label>
-                    </div>
-
-                    <div class="form-check form-switch">
-                        <label>
-                            MDNS
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/mdns" />
-                        </label>
-                    </div>
-
-                    <div class="form-check form-switch">
-                        <label>
-                            SSDP
-                            <input class="form-check-input" type="checkbox" v-model="includes"
-                                value="components/ssdp" />
-                        </label>
-                    </div>
-
-                </div>
-
-            </div>
-        </div>
-
-
-        <div class="form-check form-switch">
-            <label>
-                <input class="form-check-input" type="checkbox" v-model="includes" value="logfiles" />
                 Logfiles
+                <input class="form-check-input" type="checkbox" v-model="includes" value="logfiles" />
             </label>
         </div>
 
         <div class="form-check form-switch">
             <label>
-                <input class="form-check-input" type="checkbox" v-model="includes" value="env" />
-                .env
+                <input class="form-check-input" type="checkbox" v-model="includes" value="plugins" />
+                Plugins
+            </label>
+        </div>
+
+        <div class="form-check form-switch">
+            <label>
+                <input class="form-check-input" type="checkbox" v-model="includes" value="database" />
+                Database
+            </label>
+        </div>
+
+        <div class="form-check form-switch">
+            <label>
+                <input class="form-check-input" type="checkbox" v-model="includes" value=".env" />
+                Environment file (.env)
             </label>
         </div>
 
         <button class="btn btn-outline-danger" @click="modal.show = true">Prune</button>
-
 
     </div>
 </template>

@@ -100,10 +100,11 @@ export default defineComponent({
                 name,
                 email,
                 password,
-                admin
+                admin,
+                enabled
             } = event.target.elements;
 
-            console.log("ADD item", name, email, password, admin.value);
+            console.log("ADD item", name, email, password, admin.value, enabled.value);
 
             request("/api/users", {
                 method: "PUT",
@@ -111,7 +112,8 @@ export default defineComponent({
                     name: name.value || null,
                     email: email.value || null,
                     password: password.value || null,
-                    admin: admin.value === "on" || false
+                    admin: admin.value === "on" || false,
+                    enabled: enabled.value === "on" || false
                 })
             }, (err, data) => {
                 if (err || data.error) {
@@ -131,6 +133,7 @@ export default defineComponent({
                     email.value = "";
                     password.value = "";
                     admin.value = "off";
+                    enabled.value = "off";
 
                 }
             });
@@ -303,6 +306,12 @@ export default defineComponent({
                                 <label>
                                     <input class="form-check-input" name="admin" type="checkbox" />
                                     Admin
+                                </label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <label>
+                                    <input class="form-check-input" name="enabled" type="checkbox" />
+                                    Enabled
                                 </label>
                             </div>
                             <button type="submit" class="btn btn-outline-primary">

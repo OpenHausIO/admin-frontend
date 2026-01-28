@@ -11,7 +11,12 @@ export default defineComponent({
     },
     data() {
         return {
-            stats: [{
+
+        };
+    },
+    computed: {
+        stats() {
+            return [{
                 title: "Rooms",
                 icon: "fa-door-open",
                 href: "/rooms",
@@ -72,7 +77,7 @@ export default defineComponent({
                 href: "/scenes",
                 size: items.scenes.length
             }]
-        };
+        }
     }
 });
 </script>

@@ -27,6 +27,7 @@
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^2.2.2",
+        "dotenv": "^17.2.3",
         "grunt": "^1.5.3",
         "grunt-contrib-compress": "^2.0.0",
         "grunt-env": "^1.0.1",

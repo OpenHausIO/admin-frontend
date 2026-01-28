@@ -1096,7 +1096,7 @@ export default defineComponent({
                             </td>
                             <td>
                                 <select class="form-select w-auto bg-transparent text-white" v-model="plugin.version"
-                                    @change="versionChanged(plugin)">
+                                    @change="versionChanged(plugin)" style="border-color: #000">
                                     <option v-for="release in sortVersions(plugin.releases)">
                                         {{ release.version }}
                                     </option>

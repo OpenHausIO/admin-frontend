@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 import { request } from "../helper.js";
+import { settingsStore, userStore } from "../store.js";
 
 const components = [{
     path: "/rooms",
@@ -94,11 +95,16 @@ const system = [/*{
     name: "General",
     icon: "",
     component: () => import("../views/system.general.vue")
-}, {
+}*/, {
         path: "/system/prune",
         name: "Prune",
         icon: "fa-solid fa-broom",
         component: () => import("../views/system.prune.vue")
+    }/*, {
+        path: "/system/connector",
+        name: "Connector",
+        icon: "fa-solid fa-arrow-right-arrow-left",
+        component: () => import("../views/system.connector.vue")
     }*/];
 
 
@@ -127,13 +133,13 @@ const router = createRouter({
         path: "/dashboard",
         name: "Dasboard",
         component: () => import("../views/dashboard.vue")
-    }, {
-        path: "/",
-        name: "Login",
-        component: () => import("../views/auth.login.vue")
-    }, {
+    }, /*{
+            path: "/",
+            name: "Login",
+            component: () => import("../views/auth.login.vue")
+        },*/ {
         path: "/auth/login",
-        name: "Login",
+        name: "Login ",
         component: () => import("../views/auth.login.vue")
     },
     ...components,
@@ -157,6 +163,37 @@ const router = createRouter({
         name: "NotFound",
         redirect: "/dashboard"
     }]
+});
+
+router.beforeEach(async (to, from, next) => {
+
+    console.log("Bevore enter", to);
+
+    const user = userStore();
+    //const common = commonStore();
+
+    console.log("USer", user)
+
+    const isAuthRoute = to.fullPath.startsWith("/auth");
+    const isLoginRoute = to.fullPath === "/auth/login";
+
+    await user.checkAuth();
+
+    if (isLoginRoute && to.query.clean === "true") {
+        return next();
+    }
+    if (isAuthRoute) {
+        return next();
+    }
+
+    console.log("isAuthenticated", user.isAuthenticated);
+
+    if (user.isAuthenticated) {
+        return next();
+    }
+
+    next("/auth/login");
+
 });
 
 /*

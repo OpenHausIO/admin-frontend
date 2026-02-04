@@ -79,7 +79,19 @@ function request(url, options, cb) {
             signal: controller.signal
         }).then((response) => {
 
-            console.log("REsponse fetch", response)
+            if (!response.ok) {
+
+                let error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+                //console.warn("Fetch request not ok", error);
+
+                error.response = response;
+                error.status = response.status;
+
+                console.log("error object:", error.response.status)
+
+                return done(error);
+
+            }
 
             clearTimeout(id);
 
@@ -88,14 +100,36 @@ function request(url, options, cb) {
                 return response.json();
             }
 
-            return response.blob();
+            //let blob = response.blob();
+            //return Object.assign(blob, response);
+
+            return response;
 
         }).then((data) => {
+
             done(null, data);
+
         }).catch((err) => {
 
-            //TODO: Remove token if we receive a 401 error
             console.error("[REQUEST] Error", err, options);
+
+            if (err?.response) {
+
+                let { status } = err.response;
+
+                if (status !== 200) {
+
+                    localStorage.removeItem("x-auth-token");
+                    localStorage.removeItem("user");
+                    sessionStorage.removeItem("authenticated");
+
+                    this.$router.push({
+                        path: "/auth/login"
+                    });
+
+                }
+
+            }
 
             done(err);
 

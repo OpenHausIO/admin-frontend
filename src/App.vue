@@ -2,18 +2,21 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap";
 import { router, components, system } from "./router/index.js";
-import { settingsStore } from "./store.js";
+import { settingsStore, userStore } from "./store.js";
 //import "@dafcoe/vue-notification/dist/vue-notification.css";
 import { version } from "../package.json";
 
 const settings = settingsStore();
+
 </script>
 
 <script>
 import { defineComponent } from "vue";
 import Card from "@/components/Card.vue";
 import Notifications, { addNotification } from "@/components/Notifications.vue";
-import ProgressBar from "@/components/Progressbar.vue"
+import ProgressBar from "@/components/Progressbar.vue";
+import { request } from "./helper.js";
+
 
 export default defineComponent({
     components: {
@@ -55,26 +58,22 @@ export default defineComponent({
                 return this.$route.path.indexOf(path) === 0; // current path starts with this path string
             });
         },
-        logout() {
-            window.request("/auth/logout", {
-                method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                },
-            }, (err, data) => {
-                if (err) {
-                    console.log("LOGOUT ERROR", err);
-                    console.log(err || data);
-                    router.replace({
-                        path: "/",
-                    });
-                } else {
-                    window.localStorage.removeItem("x-auth-token");
-                    router.replace({
-                        path: "/",
-                    });
-                }
+        async logout() {
+
+            const user = userStore();
+
+            await user.logout();
+
+            addNotification("<b>Successful Logout:</b><br />You have been logged out", {
+                type: "success"
             });
+
+            setTimeout(() => {
+                this.$router.push({
+                    path: "/auth/login",
+                });
+            }, 3500);
+
         },
         showExpertSettingsNotification({ target }) {
             if (target.checked) {
@@ -108,7 +107,11 @@ export default defineComponent({
     },
     mounted() {
 
-        fetch("/api/plugins/manifests").then((res) => {
+        fetch(`/api/plugins/manifests`, {
+            headers: {
+                "x-auth-token": localStorage.getItem("x-auth-token")
+            }
+        }).then((res) => {
 
             if (res.status !== 200) {
                 return;
@@ -206,6 +209,15 @@ export default defineComponent({
                             </Card>
                         </li>
                     </RouterLink>
+
+                    <li class="nav-item">
+                        <Card>
+                            <a class="nav-link" @click.prevent="logout()" style="cursor: pointer">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                Logout
+                            </a>
+                        </Card>
+                    </li>
                     <!-- DASHBOARD & APP -->
 
                     <li class="nav-item">

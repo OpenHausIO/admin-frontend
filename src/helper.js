@@ -123,9 +123,11 @@ function request(url, options, cb) {
                     localStorage.removeItem("user");
                     sessionStorage.removeItem("authenticated");
 
+                    /*
                     this.$router.push({
                         path: "/auth/login"
                     });
+                    */
 
                 }
 

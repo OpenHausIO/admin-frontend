@@ -16,11 +16,14 @@ import JsonEditor from "@/components/JsonEditor.vue";
 import Modal from "@/components/Modal.vue";
 import LabelsInput from "@/components/LabelsInput.vue";
 import TimestampsTable from "@/components/TimestampsTable.vue";
+import RemoteLayoutEditor from "@/components/RemoteLayoutEditor.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
 
 import { itemStore } from "../store.js";
+import StatesEditor from "../components/StatesEditor.vue";
+import CommandsEditor from "../components/CommandsEditor.vue";
 const items = itemStore();
 
 export default defineComponent({
@@ -32,7 +35,10 @@ export default defineComponent({
         Tabs,
         Modal,
         LabelsInput,
-        TimestampsTable
+        TimestampsTable,
+        RemoteLayoutEditor,
+        StatesEditor,
+        CommandsEditor
     },
     data() {
         return {
@@ -50,7 +56,12 @@ export default defineComponent({
             json: null,
             modalInfo: {
                 show: false
-            }
+            },
+            showJSONEditor: false,
+            showRemoteLayoutEditor: false,
+            showStatesEditor: false,
+            showCommandsEditor: false,
+            showLabelsEditor: false
         };
     },
     computed: {
@@ -114,16 +125,71 @@ export default defineComponent({
         },
         handleClone() { },
         handleJson(item) {
+            //this.editItem = item._id
             this.json = item;
+            this.showJSONEditor = true;
         },
         onClose() {
             this.json = null;
-            this.editItem = null;
+            //this.editItem = null;
+            this.showJSONEditor = false;
         },
         onConfirm(item) {
+            console.log("onConfirm", item)
             this.json = null;
             this.editItem = null;
+            this.showJSONEditor = false;
             this.triggerUpdate(item);
+        },
+        editPages(item) {
+            this.editItem = item._id;
+            this.json = item;
+            this.showRemoteLayoutEditor = true;
+        },
+        editStates(item) {
+            this.editItem = item._id;
+            this.json = item;
+            this.showStatesEditor = true;
+        },
+        editCommands(item) {
+            this.editItem = item._id;
+            this.json = item;
+            this.showCommandsEditor = true;
+        },
+        editLabels(item) {
+            this.editItem = item._id;
+            this.json = item;
+            this.showLabelsEditor = true
+        },
+        saveRemoteLayoutEditor() {
+            this.showRemoteLayoutEditor = false;
+            this.triggerUpdate(this.json);
+            this.json = null;
+            this.editItem = null;
+        },
+        saveStatesEditor() {
+            this.showStatesEditor = false;
+            this.triggerUpdate(this.json);
+            this.json = null;
+            this.editItem = null;
+        },
+        saveCommandsEditor() {
+            this.showCommandsEditor = false;
+            this.triggerUpdate(this.json);
+            this.json = null;
+            this.editItem = null;
+        },
+        closeRemoteLayoutEditor() {
+            this.showRemoteLayoutEditor = false;
+            //this.editItem = null;
+        },
+        closeStatesEditor() {
+            this.showStatesEditor = false;
+            //this.editItem = null;
+        },
+        closeCommandsEditor() {
+            this.showCommandsEditor = false;
+            //this.editItem = null;
         }
     },
 });
@@ -133,7 +199,16 @@ export default defineComponent({
 <template>
     <div>
 
-        <JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
+        <JsonEditor v-if="!!json && showJSONEditor" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
+
+        <RemoteLayoutEditor v-if="!!editItem && showRemoteLayoutEditor" :item="json" @save="saveRemoteLayoutEditor"
+            @close="closeRemoteLayoutEditor" />
+
+        <StatesEditor v-if="!!editItem && showStatesEditor" :item="json" @save="saveStatesEditor"
+            @close="closeStatesEditor" />
+
+        <CommandsEditor v-if="!!editItem && showCommandsEditor" :item="json" @save="saveCommandsEditor"
+            @close="closeCommandsEditor" />
 
         <!--
         <Modal  :visible="modalInfo.show" title="Information" @close="modalInfo.show = false" v-bind:item="json">
@@ -143,68 +218,174 @@ export default defineComponent({
 </Modal>
 -->
 
+
+        <Modal :visible="showLabelsEditor" title="Labels" @close="showLabelsEditor = false" v-bind:item="json"
+            @confirm="onConfirm(json); showLabelsEditor = false">
+            <template v-slot:body>
+
+                <LabelsInput :data="json.labels" :edit="true" @changed="(data) => { json.labels = data; }"
+                    class="w-100" />
+
+            </template>
+        </Modal>
+
         <Tabs v-bind:items="tabItems">
             <template v-slot:overview>
-                <table class="table text-white">
-                    <thead>
-                        <tr>
-                            <th scope="col" style="width: 10px">#</th>
-                            <th scope="col" style="width: 10px">Icon</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Device</th>
-                            <th scope="col">Room</th>
-                            <th scope="col" style="width: 200px">Labels</th>
-                            <!--<th scope="col" style="width: 10px">Timestamps</th>-->
-                            <th scope="col" style="width: 10px">Enabled</th>
-                            <th scope="col" style="width: 10px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in endpoints"
-                            :class="{ 'endpoint-disabled': !item.enabled }">
-                            <th scope="row">{{ index + 1 }}</th>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon" type="text">
-                                    <template v-slot:editor="{ value }">
-                                        <IconSelect :item="item" :icon="value" />
-                                    </template>
-                                    <template v-slot:display="{ value }">
-                                        <i :class="value"></i>
-                                    </template>
-                                </EditorProperty>
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
-                                    type="text" />
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem && settings.expertSettings"
-                                    :object="item" prop="device" type="select" :items="devices">
-                                    <template v-slot:display="{ value }">
-                                        <span v-if="getItemById(devices, value)?.name">
-                                            {{ getItemById(devices, value).name }}
-                                        </span>
-                                        <span class="badge badge-danger badge-outline badge-flash" v-else>
-                                            device not set
-                                        </span>
-                                    </template>
-                                </EditorProperty>
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="room"
-                                    type="select" :items="rooms">
-                                    <template v-slot:display="{ value }">
-                                        {{ getItemById(rooms, value)?.name || "" }}
-                                    </template>
-                                </EditorProperty>
-                            </td>
-                            <td>
 
-                                <LabelsInput :data="item.labels" :edit="item._id === editItem"
-                                    @changed="(data) => { item.labels = data; }" />
+                <div class="d-md-none hide">
+                    <div v-for="endpoint in endpoints" :key="endpoint._id" class="mobile-item mb-2 py-3"
+                        style="border-bottom: 2px solid #000">
+                        <div class="d-flex align-items-center gap-2">
+                            <i :class="endpoint.icon" class="fa-fw"></i>
+                            <span class="fw-semibold">{{ endpoint.name }}</span>
+                            <div class="form-check form-switch ms-auto mb-0">
+                                <input class="form-check-input" type="checkbox" v-model="endpoint.enabled">
+                            </div>
+                        </div>
+                        <div class="small text-body-secondary mt-1">
+                            {{ getItemById(rooms, endpoint.room)?.name }}
+                            <span>·</span>
+                            {{ getItemById(devices, endpoint.device)?.name }}
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <button class="btn btn-sm btn-outline-secondary flex-grow-1" @click="edit(endpoint)">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" @click="remove(endpoint)">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-                            </td>
-                            <!--
+                <div class="table-card table-card-tabbed">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="width: 10px">#</th>
+                                <th scope="col" style="width: 10px">Icon</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Device</th>
+                                <th scope="col">Room</th>
+                                <th scope="col">States</th>
+                                <th scope="col">Commands</th>
+                                <th scope="col">Layouts</th>
+                                <th scope="col" style="width: 100px">Labels</th>
+                                <!--<th scope="col" style="width: 10px">Timestamps</th>-->
+                                <th scope="col" style="width: 10px">Enabled</th>
+                                <th scope="col" style="width: 10px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-bind:key="item._id" v-for="(item, index) in endpoints"
+                                :class="{ 'endpoint-disabled': !item.enabled }">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon"
+                                        type="text">
+                                        <template v-slot:editor="{ value }">
+                                            <IconSelect :item="item" :icon="value" />
+                                        </template>
+                                        <template v-slot:display="{ value }">
+                                            <i :class="value"></i>
+                                        </template>
+                                    </EditorProperty>
+                                </td>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
+                                        type="text" />
+                                </td>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem && settings.expertSettings"
+                                        :object="item" prop="device" type="select" :items="devices">
+                                        <template v-slot:display="{ value }">
+                                            <span v-if="getItemById(devices, value)?.name">
+                                                {{ getItemById(devices, value).name }}
+                                            </span>
+                                            <span class="badge badge-danger badge-outline badge-flash" v-else>
+                                                device not set
+                                            </span>
+                                        </template>
+                                    </EditorProperty>
+                                </td>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="room"
+                                        type="select" :items="rooms">
+                                        <template v-slot:display="{ value }">
+                                            {{ getItemById(rooms, value)?.name || "" }}
+                                        </template>
+                                    </EditorProperty>
+                                </td>
+                                <td>
+
+                                    <button class="btn btn-outline-secondary" :disabled="item._id !== editItem"
+                                        @click="editStates(item)">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+
+                                </td>
+                                <td>
+
+                                    <button class="btn btn-outline-secondary" :disabled="item._id !== editItem"
+                                        @click="editCommands(item)">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+
+                                </td>
+                                <td>
+
+                                    <button class="btn btn-outline-secondary" :disabled="item._id !== editItem"
+                                        @click="editPages(item)">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+
+                                </td>
+                                <td>
+
+
+                                    <!--
+                                    <button type="button" class="btn btn-outline-secondary position-relative"
+                                        :tooltip="item.labels.join(', ')" flow="down">
+                                        <i class="fa-solid fa-tags"></i>
+                                        <span
+                                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
+                                            {{ item.labels.length }}
+                                        </span>
+                                    </button>
+-->
+
+
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        :tooltip="item.labels.join(', ')" flow="down" :disabled="item._id !== editItem"
+                                        @click="editLabels(item)">
+                                        <i class="fa-solid fa-tags"></i>
+                                        <span class="badge bg-dark ms-2"
+                                            :class="{ 'text-muted': item.labels.length === 0 }">
+                                            {{ item.labels.length }}
+                                        </span>
+                                    </button>
+
+                                    <!--
+                                    <button class="btn btn-outline-secondary" @click="openLabels(endpoint)"
+                                        :title="item.labels.join(', ')">
+                                        <i class="fa-solid fa-tags"></i>
+                                        <span v-if="item.labels.length" class="badge rounded-pill text-bg-primary ms-1">
+                                            {{ item.labels.length }}
+                                        </span>
+                                    </button>
+                                    -->
+
+
+                                </td>
+                                <!--
+                                <td>
+
+                                    <LabelsInput :data="item.labels" :edit="item._id === editItem"
+                                        @changed="(data) => { item.labels = data; }" />
+
+                                </td>
+                                -->
+                                <!--
                             <td>
 
                                 <TimestampsTable :data="item.timestamps" :mappings="{
@@ -214,20 +395,21 @@ export default defineComponent({
 
                             </td>
                             -->
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"
-                                        v-model="item.enabled" @change="triggerUpdate(item)" />
-                                </div>
-                            </td>
-                            <td>
-                                <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleRemove="handleRemove" @handleInfo="handleInfo"
-                                    @handleJson="handleJson" />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"
+                                            v-model="item.enabled" @change="triggerUpdate(item)" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
+                                        @handleEdit="handleEdit" @handleRemove="handleRemove" @handleInfo="handleInfo"
+                                        @handleJson="handleJson" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </template>
             <template v-slot:add> Hello from apsdflkasjfdlasdf </template>
         </Tabs>

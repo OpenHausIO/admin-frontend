@@ -1,8 +1,13 @@
+@import '@fortawesome/fontawesome-free/css/all.css';
+
 body {
-    background-color: #101418;
-    background-image: radial-gradient(circle, #23282e 0%, rgba(35, 40, 46, 0.5) 15%, #101418 95%), url("/noise.png");
+    /*background-color: #101418;*/
+    /*background-image: radial-gradient(circle, #23282e 0%, rgba(35, 40, 46, 0.5) 15%, #101418 95%), url("/noise.png");
     background-attachment: fixed;
     background-position: center;
+    */
+    /*background-color: #101418;*/
+    background-color: #1a2026;
     color: rgb(230, 230, 230);
     overflow-y: scroll;
 }
@@ -63,17 +68,33 @@ body {
     color: var(--bs-dark);
 }
 
-.badge-flash {
-    animation: flashing 1s infinite;
-    background-color: transparent;
+@property --flash {
+    syntax: "<number>";
+    inherits: true;
+    initial-value: 1;
 }
 
-@keyframes flashing {
-    50% {
+/* Die eine globale Uhr */
+:root {
+    animation: flash-clock 1s infinite;
+}
 
-        border-color: transparent;
-        color: transparent
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        animation: none;
     }
+}
+
+@keyframes flash-clock {
+    50% {
+        --flash: 0;
+    }
+}
+
+/* Jedes Badge liest nur den Takt aus, hat selbst keine Animation */
+.badge-flash {
+    background-color: transparent;
+    opacity: var(--flash);
 }
 
 

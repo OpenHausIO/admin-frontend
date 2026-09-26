@@ -38,7 +38,7 @@ export default defineComponent({
                 size: items.plugins.length
             }, {
                 title: "Endpoints",
-                icon: "fa-lightbulb ",
+                icon: "fa-lightbulb",
                 href: "/endpoints",
                 size: items.endpoints.length
             }, {
@@ -84,9 +84,9 @@ export default defineComponent({
 
 
 <template>
-    <div class="conatiner">
+    <div class="container-fluid p-0">
 
-        <div class="row">
+        <div class="row hide">
             <div class="col-12 p-0">
                 <Card>
                     <h2>DASHBOARD</h2>
@@ -94,27 +94,26 @@ export default defineComponent({
             </div>
         </div>
 
-        <!-- QUCIK OVERVIEW -->
-        <div class="row">
-            <RouterLink custom :to="item.href" v-slot="{ navigate }" v-for="(item, index) in stats" :key="index">
-                <div class="col-3 p-0" @click="navigate" v-if="item"
-                    style="cursor: pointer; background-color: rgba(0,0,0, 0.12)">
-                    <Card class="p-2">
-
-                        <div class="float-start">
-                            <h3 class=" text-uppercase" style="--bs-text-opacity: 0.3">
-                                {{ item.title }}
-                            </h3>
-                            <b>{{ item.size }}</b>
-                        </div>
-                        <i class="float-end fa-solid fa-4x" :class="item.icon" style="--bs-text-opacity: 0.3">
-                        </i>
-
-                    </Card>
+        <!-- QUICK OVERVIEW -->
+        <!-- g-3: Abstand über Bootstrap-Gutter statt m-3, dadurch kein horizontaler Overflow -->
+        <div class="row g-3">
+            <RouterLink custom :to="item.href" v-slot="{ href, navigate }" v-for="item in stats" :key="item.href">
+                <div class="col-6 col-sm-6 col-lg-4 col-xxl-3">
+                    <a :href="href" @click="navigate" class="dashboard-link">
+                        <Card class="dashboard-tile">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="min-w-0">
+                                    <div class="dashboard-title text-truncate">{{ item.title }}</div>
+                                    <div class="dashboard-count">{{ item.size }}</div>
+                                </div>
+                                <i class="fa-solid fa-3x ms-auto dashboard-icon" :class="item.icon"></i>
+                            </div>
+                        </Card>
+                    </a>
                 </div>
             </RouterLink>
         </div>
-        <!-- QUCIK OVERVIEW -->
+        <!-- QUICK OVERVIEW -->
 
         <!-- SYSTEM USAGE -->
         <div class="row mt-4 hide">
@@ -245,6 +244,54 @@ export default defineComponent({
 @keyframes blinker {
     50% {
         opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .blink_me {
+        animation: none;
+    }
+}
+
+/* ---------- QUICK OVERVIEW ---------- */
+
+/* Ganze Kachel ist der Link, ohne Link-Optik */
+.dashboard-link {
+    display: block;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+    border-radius: .375rem;
+}
+
+/* Gleicher Look wie die Sidebar-Gruppen */
+.dashboard-tile {
+    height: 100%;
+    padding: .75rem 1rem;
+    background-color: #101418;
+    border-radius: .375rem !important;
+    transition: border-color .15s ease;
+}
+
+.min-w-0 {
+    min-width: 0;
+}
+
+.dashboard-title {
+    font-size: .875rem;
+    font-weight: 600;
+    /*color: var(--bs-secondary-color);*/
+}
+
+.dashboard-count {
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dashboard-tile {
+        transition: none;
     }
 }
 

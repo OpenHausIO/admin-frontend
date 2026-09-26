@@ -310,7 +310,8 @@ export default defineComponent({
                 plugin,
                 sha265,
                 content,
-                release
+                release,
+                autostart: true
             };
 
             this.installModal.show = true;
@@ -350,7 +351,7 @@ export default defineComponent({
                 console.log("Handle put request,")
 
 
-
+                let autostart = this.installModal.data.autostart;
                 let { name, intents, uuid, version } = this.installModal.data.plugin;
                 let body = this.installModal.data.content;
 
@@ -373,18 +374,32 @@ export default defineComponent({
 
                     return resp.json();
 
-                })*/.then((item) => {
+                })*/.then(async (item) => {
+                    try {
 
-                    this.openSSEprogress();
+                        this.openSSEprogress();
 
-                    return request(`/api/plugins/${item._id}/files?install=true`, {
-                        method: "PUT",
-                        headers: {
-                            "content-type": "application/octet-stream"
-                        },
-                        body
-                    });
+                        let data = await request(`/api/plugins/${item._id}/files?install=true`, {
+                            method: "PUT",
+                            headers: {
+                                "content-type": "application/octet-stream"
+                            },
+                            body
+                        });
 
+                        if (autostart) {
+                            await request(`/api/plugins/${item._id}/start`, {
+                                method: "POST"
+                            });
+                        }
+
+                        return data;
+
+                    } catch (err) {
+
+                        return Promise.reject(err);
+
+                    }
                 })/*.then((resp) => {
 
                     console.log("resp", resp)
@@ -399,7 +414,13 @@ export default defineComponent({
 
                     console.log("Plugin installed", item);
 
-                    addNotification(`Plugin "${item.name}" v${item.version} installed!<br />Start the plugin to apply changes`, {
+                    let msg = `Plugin "${item.name}" v${item.version} installed!`;
+
+                    if (!autostart) {
+                        msg += "<br />Start the plugin to apply changes";
+                    }
+
+                    addNotification(msg, {
                         type: "success",
                         dismiss: false
                     });
@@ -675,7 +696,8 @@ export default defineComponent({
                 plugin: this.uploadModal.form, // { name, intents, uuid, version }
                 sha265,
                 content,
-                release: this.uploadModal.form.version // not needed in handleInstallConfirm
+                release: this.uploadModal.form.version, // not needed in handleInstallConfirm
+                autostart: true
             };
 
             // handle http requests
@@ -724,7 +746,7 @@ export default defineComponent({
                 <div class="mb-3">
                     <label class="form-label">Name</label>
                     <div class="input-group">
-                        <input type="text" class="form-control bg-dark text-secondary"
+                        <input type="text" class="form-control bg-dark text-secondary" style="border-color: #000"
                             v-model="installModal.data.plugin.name" :readonly="!settings.expertSettings">
                     </div>
                 </div>
@@ -732,7 +754,7 @@ export default defineComponent({
                 <div class="mb-3">
                     <label class="form-label">Version</label>
                     <div class="input-group">
-                        <input type="text" class="form-control bg-dark text-secondary"
+                        <input type="text" class="form-control bg-dark text-secondary" style="border-color: #000"
                             v-model="installModal.data.plugin.version" :readonly="!settings.expertSettings">
                     </div>
                 </div>
@@ -747,10 +769,10 @@ export default defineComponent({
                 </div>
                 -->
 
-                <div class="mb-3">
+                <div class="mb-3" v-if="settings.expertSettings">
                     <label class="form-label">UUID</label>
                     <div class="input-group">
-                        <input type="text" class="form-control bg-dark text-secondary"
+                        <input type="text" class="form-control bg-dark text-secondary" style="border-color: #000"
                             v-model="installModal.data.plugin.uuid" :readonly="!settings.expertSettings">
                     </div>
                 </div>
@@ -758,7 +780,7 @@ export default defineComponent({
                 <div class="mb-3">
                     <label class="form-label">Description</label>
                     <div class="input-group">
-                        <textarea type="text" class="form-control bg-dark text-secondary"
+                        <textarea type="text" class="form-control bg-dark text-secondary" style="border-color: #000"
                             v-bind:value="installModal.data.plugin.description" rows="5"
                             :readonly="!settings.expertSettings">
                         </textarea>
@@ -777,9 +799,16 @@ export default defineComponent({
                         </span>
                     </label>
                     <div class="input-group">
-                        <input type="text" class="form-control bg-dark text-secondary"
+                        <input type="text" class="form-control bg-dark text-secondary" style="border-color: #000"
                             v-model="installModal.data.release.checksum" readonly>
                     </div>
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                    <label for="autoStartPlugin">Autostart</label>
+                    <input class="form-check-input" type="checkbox" v-model="installModal.data.autostart"
+                        id="autoStartPlugin" style="border-color: #000" />
+
                 </div>
 
                 <!--
@@ -794,7 +823,7 @@ export default defineComponent({
                     </div>
                 </div>
             -->
-                <div class="mb-3">
+                <div class="mb-3" v-if="settings.expertSettings">
                     <label class="form-label">Intents</label>
                     <EditorProperty :enabled="settings.expertSettings" :object="installModal.data.plugin" prop="intents"
                         type="checkbox" :items="createIntentsArray()">
@@ -924,105 +953,107 @@ export default defineComponent({
 
             <!-- OVERVIEW-->
             <template v-slot:overview>
-                <table class="table text-white">
-                    <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Version</th>
-                            <th scope="col" v-if="settings.expertSettings">UUID</th>
-                            <th scope="col">
-                                Intents <span v-if="editItem">(Granted)</span>
-                            </th>
-                            <th scope="col" style="width: 10px">Autostart</th>
-                            <th scope="col" style="width: 10px">Enabled</th>
-                            <th scope="col" style="width: 10px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in plugins">
-                            <th scope="row">{{ index + 1 }}</th>
-                            <td>
-                                <EditorProperty
-                                    :enabled="item._id === editItem && settings.expertSettings && enabledEditFields"
-                                    :object="item" prop="name" type="text" />
-                            </td>
-                            <td>
-                                <EditorProperty
-                                    :enabled="item._id === editItem && settings.expertSettings && enabledEditFields"
-                                    :object="item" prop="version" type="text" />
-                            </td>
-                            <td v-if="settings.expertSettings">
+                <div class="table-card table-card-tabbed">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Version</th>
+                                <th scope="col" v-if="settings.expertSettings">UUID</th>
+                                <th scope="col" v-if="settings.expertSettings">
+                                    Intents <span v-if="editItem">(Granted)</span>
+                                </th>
+                                <th scope="col" style="width: 10px">Autostart</th>
+                                <th scope="col" style="width: 10px">Enabled</th>
+                                <th scope="col" style="width: 10px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-bind:key="item._id" v-for="(item, index) in plugins">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>
+                                    <EditorProperty
+                                        :enabled="item._id === editItem && settings.expertSettings && enabledEditFields"
+                                        :object="item" prop="name" type="text" />
+                                </td>
+                                <td>
+                                    <EditorProperty
+                                        :enabled="item._id === editItem && settings.expertSettings && enabledEditFields"
+                                        :object="item" prop="version" type="text" />
+                                </td>
+                                <td v-if="settings.expertSettings">
 
-                                <EditorProperty
-                                    :enabled="item._id === editItem && settings.expertSettings && enabledEditFields"
-                                    :object="item" prop="uuid" type="text" />
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="intents"
-                                    type="checkbox" :items="createIntentsArray(item)">
-                                    <template v-slot:display>
-                                        <ul style="padding-left: 1rem">
-                                            <li v-bind:key="index" v-for="(intent, index) in item.intents">
-                                                {{ intent }}
-                                            </li>
-                                        </ul>
-                                    </template>
-                                </EditorProperty>
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" :disabled="!item.enabled"
-                                        v-bind:checked="item.autostart" v-model="item.autostart"
-                                        @change.lazy="triggerUpdate(item)" />
-                                </div>
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"
-                                        v-model="item.enabled" v-on:click="item.autostart = false"
-                                        @change.lazy="triggerUpdate(item)" />
-                                </div>
-                            </td>
-                            <td>
-                                <ActionsButtons :showEdit="true" :showRemove="true" :showInfo="true" :item="item"
-                                    @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
-                                    @handleJson="handleJson">
-                                    <template v-slot:custom>
-                                        <button type="button" class="btn btn-outline-success" :disabled="!item.enabled"
-                                            v-on:click="handleStart(item)" :class="{
-                                                'text-muted': !item.enabled,
-                                                'border-secondary': !item.enabled,
-                                            }" tooltip="Start Plugin" flow="down">
-                                            <i class="fa-solid fa-power-off"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-warning hide"
-                                            :disabled="!item.enabled" v-on:click="handleStop(item)" :class="{
-                                                'text-muted': !item.enabled,
-                                                'border-secondary': !item.enabled,
-                                            }" tooltip="Stop Plugin" flow="down">
-                                            <i class="fa-solid fa-power-off"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-danger hide"
-                                            :disabled="!item.enabled" v-on:click="handleStop(item)" :class="{
-                                                'text-muted': !item.enabled,
-                                                'border-secondary': !item.enabled,
-                                            }" tooltip="Stop Plugin" flow="down">
-                                            <i class="fa-solid fa-power-off"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-warning hide"
-                                            :disabled="!item.enabled" v-on:click="handleRestart(item)" :class="{
-                                                'text-muted': !item.enabled,
-                                                'border-secondary': !item.enabled,
-                                            }" tooltip="Restart Plugin" flow="down">
-                                            <i class="fa-solid fa-arrow-rotate-right"></i>
-                                        </button>
-                                    </template>
-                                </ActionsButtons>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                    <EditorProperty
+                                        :enabled="item._id === editItem && settings.expertSettings && enabledEditFields"
+                                        :object="item" prop="uuid" type="text" />
+                                </td>
+                                <td v-if="settings.expertSettings">
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="intents"
+                                        type="checkbox" :items="createIntentsArray(item)">
+                                        <template v-slot:display>
+                                            <ul style="padding-left: 1rem" class="mb-0">
+                                                <li v-bind:key="index" v-for="(intent, index) in item.intents">
+                                                    {{ intent }}
+                                                </li>
+                                            </ul>
+                                        </template>
+                                    </EditorProperty>
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" :disabled="!item.enabled"
+                                            v-bind:checked="item.autostart" v-model="item.autostart"
+                                            @change.lazy="triggerUpdate(item)" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"
+                                            v-model="item.enabled" v-on:click="item.autostart = false"
+                                            @change.lazy="triggerUpdate(item)" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <ActionsButtons :showEdit="true" :showRemove="true" :showInfo="true" :item="item"
+                                        @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
+                                        @handleJson="handleJson">
+                                        <template v-slot:custom>
+                                            <button type="button" class="btn btn-outline-success"
+                                                :disabled="!item.enabled" v-on:click="handleStart(item)" :class="{
+                                                    'text-muted': !item.enabled,
+                                                    'border-secondary': !item.enabled,
+                                                }" tooltip="Start Plugin" flow="down">
+                                                <i class="fa-solid fa-power-off"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-warning hide"
+                                                :disabled="!item.enabled" v-on:click="handleStop(item)" :class="{
+                                                    'text-muted': !item.enabled,
+                                                    'border-secondary': !item.enabled,
+                                                }" tooltip="Stop Plugin" flow="down">
+                                                <i class="fa-solid fa-power-off"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger hide"
+                                                :disabled="!item.enabled" v-on:click="handleStop(item)" :class="{
+                                                    'text-muted': !item.enabled,
+                                                    'border-secondary': !item.enabled,
+                                                }" tooltip="Stop Plugin" flow="down">
+                                                <i class="fa-solid fa-power-off"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-warning hide"
+                                                :disabled="!item.enabled" v-on:click="handleRestart(item)" :class="{
+                                                    'text-muted': !item.enabled,
+                                                    'border-secondary': !item.enabled,
+                                                }" tooltip="Restart Plugin" flow="down">
+                                                <i class="fa-solid fa-arrow-rotate-right"></i>
+                                            </button>
+                                        </template>
+                                    </ActionsButtons>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </template>
             <!-- OVERVIEW-->
 
@@ -1068,7 +1099,7 @@ export default defineComponent({
                             <th scope="col">Version</th>
                             <th scope="col">Website</th>
                             <th scope="col">Description</th>
-                            <th scope="col">Intents</th>
+                            <th scope="col" v-if="settings.expertSettings">Intents</th>
                             <th scope="col">Actions</th>
                         </tr>
                     </thead>
@@ -1109,12 +1140,12 @@ export default defineComponent({
                                 </a>
                             </td>
                             <td>
-                                <textarea v-bind:value="plugin.description" readonly="true" rows="5"
+                                <textarea v-bind:value="plugin.description" readonly="true" rows="3"
                                     class="form-control w-100 text-white border-0 p-1"
                                     style="background-color: transparent; resize: none;">
                                 </textarea>
                             </td>
-                            <td>
+                            <td v-if="settings.expertSettings">
                                 <ul class="ps-3">
                                     <li v-bind:key="index" v-for="(intent, index) in plugin.intents">
                                         {{ intent }}

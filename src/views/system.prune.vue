@@ -77,7 +77,7 @@ export default defineComponent({
 
 
 <template>
-    <div>
+    <div class="pane p-3">
 
         <Modal v-if="!!modal.show" :visible="modal.show" title="Are you really sure?!">
             <template #body>
@@ -142,7 +142,7 @@ export default defineComponent({
             </label>
         </div>
 
-        <button class="btn btn-outline-danger" @click="modal.show = true">Prune</button>
+        <button class="btn btn-outline-danger mt-3" @click="modal.show = true">Prune</button>
 
     </div>
 </template>

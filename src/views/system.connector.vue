@@ -4,6 +4,7 @@ import Tabs from "@/components/Tabs.vue";
 import { useRoute } from "vue-router";
 import { request } from "../helper.js";
 import TimestampsTable from "@/components/TimestampsTable.vue";
+import { addNotification } from "../components/Notifications.vue";
 
 
 export default defineComponent({
@@ -51,6 +52,7 @@ export default defineComponent({
     },
     methods: {
         fetchInfo() {
+
             request("/api/system/connector", (err, body) => {
                 if (err) {
 
@@ -58,21 +60,17 @@ export default defineComponent({
 
                 } else {
 
-                    console.log("Result", body)
-
-                    body.forEach((info) => {
-                        Object.assign(info.timestamps, {
-                            ...info.timestamps,
-                            refreshed: Date.now()
-                        });
-                    });
-
                     this.connectors = body;
 
                 }
             });
+
         },
         openSSE() {
+
+            if (this.sse) {
+                return;
+            }
 
             let token = localStorage.getItem("x-auth-token");
             const eventSource = new EventSource(`/api/system/connector/info?x-auth-token=${token}`);
@@ -82,10 +80,7 @@ export default defineComponent({
             eventSource.onmessage = (event) => {
                 try {
 
-                    let data = JSON.parse(event.data);
-                    console.log("MEssage from backend", data)
-
-                    this.connectors = [data];
+                    this.connectors = JSON.parse(event.data);
 
                 } catch (err) {
 
@@ -95,8 +90,27 @@ export default defineComponent({
             };
 
             eventSource.onerror = (err) => {
-                console.error("ERROR on EventSource", err);
-                eventSource.close();
+
+                if (eventSource.readyState === EventSource.CLOSED) {
+
+
+                    addNotification(`Event source closed`, {
+                        type: "warning",
+                        dismiss: false
+                    });
+
+                } else if (eventSource.readyState === EventSource.CONNECTING) {
+
+                    console.log("Verbindung unterbrochen, Browser versucht Reconnect...");
+
+                } else {
+
+                    console.error("ERROR on EventSource", err);
+
+                }
+
+                this.sse = null;
+
             };
 
         },
@@ -139,10 +153,9 @@ export default defineComponent({
 
 
 <template>
-    <div>
+    <div class="p-3 pane">
 
-
-        <table class="table text-white border-secondary">
+        <table class="table text-white border-secondary mb-0">
             <thead>
                 <tr>
                     <th scope="col" style="width: 10px">#</th>
@@ -152,6 +165,7 @@ export default defineComponent({
                     <th scope="col">Whitelist</th>
                     <th scope="col">IP Address</th>
                     <th scope="col">Connections</th>
+                    <!--<th scope="col">Online</th>-->
                     <th scope="col">Timestamps</th>
                 </tr>
             </thead>
@@ -184,11 +198,19 @@ export default defineComponent({
                     <td>
                         {{ connector.connections }}
                     </td>
+                    <!--
+                    <td>
+                        <i class="fa-solid fa-circle" style="font-size: 8px" :class="{
+                            'text-success': connector.timestamps.connected > connector.timestamps.disconnected,
+                            'text-danger': connector.timestamps.connected < connector.timestamps.disconnected
+                        }"></i>
+                    </td>
+                    -->
                     <td>
 
                         <TimestampsTable :data="connector.timestamps" :mappings="{
                             'connected': 'Connected',
-                            'refreshed': 'Refreshed',
+                            'updated': 'Updated',
                             'disconnected': 'Disconnected',
                         }" />
 
@@ -197,7 +219,7 @@ export default defineComponent({
             </tbody>
         </table>
 
-        <button class="btn btn-outline-primary" @click="fetchInfo()">
+        <button class="btn btn-outline-primary hide" @click="fetchInfo()">
             Refresh
         </button>
 

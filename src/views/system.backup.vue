@@ -348,7 +348,7 @@ export default defineComponent({
                 </label>
             </div>
 
-            <hr />
+            <hr class="my-3" v-if="settings.expertSettings" />
 
             <div class="form-check form-switch" v-if="settings.expertSettings">
                 <label>
@@ -371,7 +371,8 @@ export default defineComponent({
                 </label>
             </div>
 
-            <button class="btn btn-outline-primary" @click="download">Download</button>
+            <button class="btn btn-outline-primary" :class="{ 'mt-3': settings.expertSettings }"
+                @click="download">Download</button>
 
         </template>
         <!-- EXPORT -->
@@ -420,7 +421,7 @@ export default defineComponent({
                 </label>
             </div>
 
-            <hr />
+            <hr class="my-3" v-if="settings.expertSettings" />
 
             <div class="form-check form-switch">
                 <label>
@@ -429,7 +430,7 @@ export default defineComponent({
                 </label>
             </div>
 
-            <button class="btn btn-outline-primary" @click="upload">Upload</button>
+            <button class="btn btn-outline-primary mt-3" @click="upload">Upload</button>
 
         </template>
         <!-- IMPORT -->

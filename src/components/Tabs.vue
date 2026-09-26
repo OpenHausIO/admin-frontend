@@ -11,7 +11,10 @@ export default defineComponent({
         };
     },
     props: {
-        items: Array
+        items: {
+            type: Array,
+            default: []
+        }
     },
     methods: {
         isActive(id) {
@@ -22,7 +25,9 @@ export default defineComponent({
         },
     },
     created() {
-        this.activeItem = this.items[0].id;
+        if (this.items?.length > 0) {
+            this.activeItem = this.items[0].id;
+        }
     },
 });
 </script>
@@ -41,7 +46,7 @@ export default defineComponent({
         <!-- NAVIGATION -->
         <!-- CONTENT -->
         <div class="tab-content">
-            <div class="tab-pane fade" :class="{ 'active show': isActive(item.id) }" v-bind:key="item.id"
+            <div class="tab-pane fade p-3" :class="{ 'active show': isActive(item.id) }" v-bind:key="item.id"
                 v-for="item in items">
                 <slot v-bind:id="item.id" v-bind:name="item.id"></slot>
             </div>
@@ -61,5 +66,16 @@ export default defineComponent({
 :deep(.nav-link) {
     border-color: #000 !important;
     cursor: pointer;
+}
+
+.nav-tabs {
+    border-bottom: 0
+}
+
+.tab-pane {
+    background-color: #101418 !important;
+    border: 1px solid #000;
+    border-radius: .375rem;
+    border-top-left-radius: 0;
 }
 </style>

@@ -170,56 +170,60 @@ export default defineComponent({
         <Tabs v-bind:items="tabItems">
             <!-- OVERVIEW -->
             <template v-slot:overview>
-                <table class="table text-white border-secondary">
-                    <thead>
-                        <tr>
-                            <th scope="col" style="width: 10px">#</th>
-                            <th scope="col" style="width: 10px">Icon</th>
-                            <th scope="col" @click="sort('name')" style="cursor: pointer;">
-                                Name
-                                <i class="fa-solid fa-filter" style="font-size: 10px"></i>
-                            </th>
-                            <th scope="col" @click="sort('floor')" style="cursor: pointer;">
-                                Floor
-                                <i class="fa-solid fa-filter" style="font-size: 10px"></i>
-                            </th>
-                            <th scope="col">Number</th>
-                            <th scope="col" style="width: 10px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in sortedItems">
-                            <th scope="row">{{ index + 1 }}</th>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon" type="text">
-                                    <template v-slot:editor="{ value }">
-                                        <IconSelect :item="item" :icon="value" />
-                                    </template>
-                                    <template v-slot:display="{ value }">
-                                        <i :class="value"></i>
-                                    </template>
-                                </EditorProperty>
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
-                                    type="text" />
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="floor"
-                                    type="number" />
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="number"
-                                    type="number" />
-                            </td>
-                            <td>
-                                <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
-                                    @handleJson="handleJson" />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="table-card table-card-tabbed">
+                    <table class="table align-middle mb-0">
+
+                        <thead>
+                            <tr>
+                                <th scope="col" style="width: 10px">#</th>
+                                <th scope="col" style="width: 10px">Icon</th>
+                                <th scope="col" @click="sort('name')" style="cursor: pointer;">
+                                    Name
+                                    <i class="fa-solid fa-filter" style="font-size: 10px"></i>
+                                </th>
+                                <th scope="col" @click="sort('floor')" style="cursor: pointer;">
+                                    Floor
+                                    <i class="fa-solid fa-filter" style="font-size: 10px"></i>
+                                </th>
+                                <th scope="col">Number</th>
+                                <th scope="col" style="width: 10px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-bind:key="item._id" v-for="(item, index) in sortedItems">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon"
+                                        type="text">
+                                        <template v-slot:editor="{ value }">
+                                            <IconSelect :item="item" :icon="value" />
+                                        </template>
+                                        <template v-slot:display="{ value }">
+                                            <i :class="value"></i>
+                                        </template>
+                                    </EditorProperty>
+                                </td>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
+                                        type="text" />
+                                </td>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="floor"
+                                        type="number" />
+                                </td>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="number"
+                                        type="number" />
+                                </td>
+                                <td>
+                                    <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
+                                        @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
+                                        @handleJson="handleJson" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </template>
             <!-- OVERVIEW -->
             <!-- ADD-->

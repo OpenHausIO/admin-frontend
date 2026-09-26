@@ -21,6 +21,10 @@ export default defineComponent({
             default: true,
             type: Boolean,
         },
+        showJSON: {
+            type: Boolean,
+            default: true
+        },
         item: {
             required: true,
             type: Object,
@@ -75,7 +79,7 @@ export default defineComponent({
             <i class="fa-regular fa-clone"></i>
         </button>
 
-        <button type="button" class="btn btn-outline-secondary" v-if="settings.expertSettings"
+        <button type="button" class="btn btn-outline-secondary" v-if="settings.expertSettings && showJSON"
             v-on:click="handleJson(item)" tooltip="Edit JSON" flow="down">
             <i class="fa-solid fa-code"></i>
         </button>

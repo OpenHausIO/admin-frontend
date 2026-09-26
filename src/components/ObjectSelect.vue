@@ -14,6 +14,7 @@ import { defineComponent } from 'vue';
 
 export default defineComponent({
     name: "ObjectSelect",
+    emits: ["selected"],
     props: {
         modelValue: {
             type: Object,
@@ -61,7 +62,7 @@ export default defineComponent({
         },
         updateValue() {
             const parsedValue = this.deserializeValue(this.internalValue);
-            this.$emit('update:modelValue', parsedValue);
+            this.$emit("selected", parsedValue);
         },
     },
 });

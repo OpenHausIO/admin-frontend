@@ -155,49 +155,51 @@ export default defineComponent({
 
         <Tabs v-bind:items="tabItems">
             <template v-slot:overview>
-                <table class="table text-white">
-                    <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Timestamps</th>
-                            <th scope="col" style="width: 10px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in webhooks">
-                            <th scope="row">{{ index + 1 }}</th>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
-                                    type="text" />
-                            </td>
-                            <td>
+                <div class="table-card table-card-tabbed">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Timestamps</th>
+                                <th scope="col" style="width: 10px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-bind:key="item._id" v-for="(item, index) in webhooks">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
+                                        type="text" />
+                                </td>
+                                <td>
 
-                                <TimestampsTable :data="item.timestamps" :mappings="{
-                                    'created': 'Created',
-                                    'updated': 'Updated',
-                                    'triggered': 'Triggered'
-                                }" />
+                                    <TimestampsTable :data="item.timestamps" :mappings="{
+                                        'created': 'Created',
+                                        'updated': 'Updated',
+                                        'triggered': 'Triggered'
+                                    }" />
 
-                            </td>
-                            <td>
-                                <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson">
-                                    <template v-slot:custom>
-                                        <a :href="generateURL(item)" class="btn btn-outline-secondary"
-                                            tooltip="Copy Webhook URL" flow="down" @click.prevent="copyURL(item)">
-                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-outline-secondary"
-                                            tooltip="Trigger Webhook" flow="down" @click="triggerWebhook(item)">
-                                            <i class="fa-solid fa-link"></i>
-                                        </button>
-                                    </template>
-                                </ActionsButtons>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                </td>
+                                <td>
+                                    <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
+                                        @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson">
+                                        <template v-slot:custom>
+                                            <a :href="generateURL(item)" class="btn btn-outline-secondary"
+                                                tooltip="Copy Webhook URL" flow="down" @click.prevent="copyURL(item)">
+                                                <i class="fa-solid fa-link"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                tooltip="Trigger Webhook" flow="down" @click="triggerWebhook(item)">
+                                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                            </button>
+                                        </template>
+                                    </ActionsButtons>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </template>
             <template v-slot:add>
 

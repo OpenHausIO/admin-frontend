@@ -133,48 +133,51 @@ export default defineComponent({
 
         <Tabs v-bind:items="tabItems">
             <template v-slot:overview>
-                <table class="table text-white">
-                    <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Type</th>
-                            <th scope="col">Timestamps</th>
-                            <th scope="col" style="width: 10px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in mdns">
-                            <th scope="row">{{ index + 1 }}</th>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
-                                    type="text" />
-                            </td>
-                            <td>
-                                <select class="form-select bg-dark text-white" v-model="item.type"
-                                    v-if="item._id === editItem">
-                                    <option :value="type" v-bind:key="type" v-for="type in recordTypes">
-                                        {{ type }}
-                                    </option>
-                                </select>
-                                <span v-if="item._id !== editItem"> {{ item.type }}</span>
-                            </td>
-                            <td>
+                <div class="table-card table-card-tabbed">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Type</th>
+                                <th scope="col">Timestamps</th>
+                                <th scope="col" style="width: 10px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-bind:key="item._id" v-for="(item, index) in mdns">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
+                                        type="text" />
+                                </td>
+                                <td>
+                                    <select class="form-select bg-dark text-white" v-model="item.type"
+                                        v-if="item._id === editItem">
+                                        <option :value="type" v-bind:key="type" v-for="type in recordTypes">
+                                            {{ type }}
+                                        </option>
+                                    </select>
+                                    <span v-if="item._id !== editItem"> {{ item.type }}</span>
+                                </td>
+                                <td>
 
-                                <TimestampsTable :data="item.timestamps" :mappings="{
-                                    'created': 'Created',
-                                    'updated': 'Updated',
-                                    'announced': 'Announced',
-                                }" />
+                                    <TimestampsTable :data="item.timestamps" :mappings="{
+                                        'created': 'Created',
+                                        'updated': 'Updated',
+                                        'announced': 'Announced',
+                                    }" />
 
-                            </td>
-                            <td>
-                                <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson" />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                </td>
+                                <td>
+                                    <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
+                                        @handleEdit="handleEdit" @handleRemove="handleRemove"
+                                        @handleJson="handleJson" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </template>
             <template v-slot:add>
 

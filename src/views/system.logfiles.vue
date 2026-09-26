@@ -155,31 +155,53 @@ export default defineComponent({
 });
 </script>
 
-
 <template>
-    <div>
+    <div class="pane logfiles">
 
-        <div ref="logfilecontainer" style="max-height: 90vh; min-height: 90vh; overflow-x: scroll" @scroll="onScroll">
+        <div ref="logfilecontainer" class="logfiles-list" @scroll="onScroll">
             <div class="record" v-bind:key="index" v-for="(record, index) in records" v-html="format(record)"></div>
         </div>
 
-        <hr class="mb-2" />
+        <div class="logfiles-footer">
+            <div class="form-check form-switch mb-0">
+                <label>
+                    <input class="form-check-input" type="checkbox" v-model="autoscrollEnabled" />
+                    <small>Autoscroll</small>
+                </label>
+            </div>
 
-        <div class="form-check form-switch float-start">
-            <label>
-                <input class="form-check-input" type="checkbox" v-bind:checked="autoscrollEnabled"
-                    v-model="autoscrollEnabled" />
-                <small>Autoscroll</small>
-            </label>
+            <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-outline-secondary" @click="exportLogfiles()">Export</button>
+                <button class="btn btn-outline-danger" @click="clearLogfiles()">Clear</button>
+            </div>
+
         </div>
-
-        <button class="btn btn-outline-danger float-end ms-1" @click="clearLogfiles()">
-            Clear
-        </button>
-
-        <button class="btn btn-outline-secondary float-end" @click="exportLogfiles()">
-            Export
-        </button>
 
     </div>
 </template>
+
+<style scoped>
+.logfiles {
+    display: flex;
+    flex-direction: column;
+    /* Bildschirmhöhe minus Padding der View (p-3 oben + unten) */
+    height: calc(100vh - 2rem);
+}
+
+.logfiles-list {
+    flex: 1;
+    min-height: 0;
+    /* sonst wächst die Liste statt zu scrollen */
+    overflow-y: auto;
+    padding: 1rem;
+    border-bottom: 1px solid #000
+}
+
+.logfiles-footer {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem 1rem;
+    border-top: 1px solid var(--bs-border-color);
+}
+</style>

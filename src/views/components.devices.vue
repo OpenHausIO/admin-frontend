@@ -14,6 +14,7 @@ import IconSelect from "@/components/IconSelect.vue";
 import Tabs from "@/components/Tabs.vue";
 import JsonEditor from "@/components/JsonEditor.vue";
 import LabelsInput from "@/components/LabelsInput.vue";
+import Modal from "@/components/Modal.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
@@ -40,7 +41,9 @@ export default defineComponent({
                 name: "Add",
                 id: "add",
             }*/],
-            json: null
+            json: null,
+            showJSONEditor: false,
+            showLabelsEditor: false
         };
     },
     computed: {
@@ -100,16 +103,24 @@ export default defineComponent({
         handleClone() { },
         handleJson(item) {
             this.json = item;
+            this.showJSONEditor = true;
         },
         onClose() {
             this.json = null;
             this.editItem = null;
+            this.showJSONEditor = false;
+            this.showLabelsEditor = true;
         },
         onConfirm(item) {
             this.json = null;
             this.editItem = null;
             this.triggerUpdate(item);
-        }
+        },
+        editLabels(item) {
+            this.editItem = item._id;
+            this.json = item;
+            this.showLabelsEditor = true;
+        },
     },
 });
 </script>
@@ -118,80 +129,101 @@ export default defineComponent({
 <template>
     <div>
 
-        <JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
+        <JsonEditor v-if="!!json && showJSONEditor" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
+
+        <Modal :visible="showLabelsEditor" title="Labels" @close="showLabelsEditor = false" v-bind:item="json"
+            @confirm="onConfirm(json); showLabelsEditor = false">
+            <template v-slot:body>
+
+                <LabelsInput :data="json.labels" :edit="true" @changed="(data) => { json.labels = data; }"
+                    class="w-100" />
+
+            </template>
+        </Modal>
 
         <Tabs v-bind:items="tabItems">
             <template v-slot:overview>
-                <table class="table text-white">
-                    <thead>
-                        <tr>
-                            <th scope="col" style="width: 10px">#</th>
-                            <th scope="col" style="width: 10px">Icon</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Manufacturer</th>
-                            <th scope="col">Model</th>
-                            <th scope="col">Room</th>
-                            <th scope="col" style="width:300px">Labels</th>
-                            <th scope="col" style="width: 10px">Enabled</th>
-                            <th scope="col" style="width: 10px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in devices"
-                            :class="{ 'endpoint-disabled': !item.enabled }">
-                            <th scope="row">{{ index + 1 }}</th>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon" type="text">
-                                    <template v-slot:editor="{ value }">
-                                        <IconSelect :item="item" :icon="value" />
-                                    </template>
-                                    <template v-slot:display="{ value }">
-                                        <i :class="value"></i>
-                                    </template>
-                                </EditorProperty>
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
-                                    type="text" />
-                            </td>
-                            <td>
+                <div class="table-card table-card-tabbed">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="width: 10px">#</th>
+                                <th scope="col" style="width: 10px">Icon</th>
+                                <th scope="col">Name</th>
+                                <!--<th scope="col hide">Manufacturer</th>-->
+                                <!--<th scope="col hide">Model</th>-->
+                                <th scope="col">Room</th>
+                                <th scope="col" style="width:300px">Labels</th>
+                                <th scope="col" style="width: 10px">Enabled</th>
+                                <th scope="col" style="width: 10px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-bind:key="item._id" v-for="(item, index) in devices"
+                                :class="{ 'endpoint-disabled': !item.enabled }">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon"
+                                        type="text">
+                                        <template v-slot:editor="{ value }">
+                                            <IconSelect :item="item" :icon="value" />
+                                        </template>
+                                        <template v-slot:display="{ value }">
+                                            <i :class="value"></i>
+                                        </template>
+                                    </EditorProperty>
+                                </td>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
+                                        type="text" />
+                                </td>
+                                <!--<td class="hide">
                                 <EditorProperty v-if="item?.meta"
                                     :enabled="item._id === editItem && settings.expertSettings" :object="item.meta"
                                     prop="manufacturer" type="text" />
                             </td>
-                            <td>
+                            <td class="hide">
                                 <EditorProperty v-if="item?.meta"
                                     :enabled="item._id === editItem && settings.expertSettings" :object="item.meta"
                                     prop="model" type="text" />
                             </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="room"
-                                    type="select" :items="rooms">
-                                    <template v-slot:display="{ value }">
-                                        {{ getItemById(rooms, value)?.name || "" }}
-                                    </template>
-                                </EditorProperty>
-                            </td>
-                            <td>
+                            -->
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="room"
+                                        type="select" :items="rooms">
+                                        <template v-slot:display="{ value }">
+                                            {{ getItemById(rooms, value)?.name || "" }}
+                                        </template>
+                                    </EditorProperty>
+                                </td>
+                                <td>
 
-                                <LabelsInput :data="item.labels" :edit="item._id === editItem"
-                                    @changed="(data) => { item.labels = data; }" />
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        :tooltip="item.labels.join(', ')" flow="down" :disabled="item._id !== editItem"
+                                        @click="editLabels(item)">
+                                        <i class="fa-solid fa-tags"></i>
+                                        <span class="badge bg-dark ms-2"
+                                            :class="{ 'text-muted': item.labels.length === 0 }">
+                                            {{ item.labels.length }}
+                                        </span>
+                                    </button>
 
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"
-                                        v-model="item.enabled" @change.lazy="triggerUpdate(item)" />
-                                </div>
-                            </td>
-                            <td>
-                                <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleRemove="handleRemove" @handleInfo="handleInfo"
-                                    @handleJson="handleJson" />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"
+                                            v-model="item.enabled" @change.lazy="triggerUpdate(item)" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
+                                        @handleEdit="handleEdit" @handleRemove="handleRemove" @handleInfo="handleInfo"
+                                        @handleJson="handleJson" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </template>
             <template v-slot:add>
                 <div class="container-fluid">

@@ -118,43 +118,46 @@ export default defineComponent({
 
         <Tabs v-bind:items="tabItems">
             <template v-slot:overview>
-                <table class="table text-white">
-                    <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Description</th>
-                            <th scope="col">Topic</th>
-                            <th scope="col">Timestamps</th>
-                            <th scope="col" style="width: 10px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in mqtt">
-                            <th scope="row">{{ index + 1 }}</th>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="description"
-                                    type="text" />
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="topic"
-                                    type="text" />
-                            </td>
-                            <td>
+                <div class="table-card table-card-tabbed">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Topic</th>
+                                <th scope="col">Timestamps</th>
+                                <th scope="col" style="width: 10px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-bind:key="item._id" v-for="(item, index) in mqtt">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="description"
+                                        type="text" />
+                                </td>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="topic"
+                                        type="text" />
+                                </td>
+                                <td>
 
-                                <TimestampsTable :data="item.timestamps" :mappings="{
-                                    'created': 'Created',
-                                    'updated': 'Updated',
-                                    'published': 'Published',
-                                }" />
+                                    <TimestampsTable :data="item.timestamps" :mappings="{
+                                        'created': 'Created',
+                                        'updated': 'Updated',
+                                        'published': 'Published',
+                                    }" />
 
-                            </td>
-                            <td>
-                                <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson" />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                </td>
+                                <td>
+                                    <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
+                                        @handleEdit="handleEdit" @handleRemove="handleRemove"
+                                        @handleJson="handleJson" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </template>
             <template v-slot:add>
                 <div class="row">

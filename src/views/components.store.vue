@@ -163,66 +163,68 @@ export default defineComponent({
 
         <Tabs v-bind:items="tabItems">
             <template v-slot:overview>
-                <table class="table text-white">
-                    <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Configs</th>
-                            <th scope="col">Timestamps</th>
-                            <th scope="col" style="width: 10px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in config">
-                            <th scope="row">{{ index + 1 }}</th>
-                            <td>
+                <div class="table-card table-card-tabbed">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Configs</th>
+                                <th scope="col">Timestamps</th>
+                                <th scope="col" style="width: 10px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-bind:key="item._id" v-for="(item, index) in config">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>
 
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
-                                    type="text" />
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
+                                        type="text" />
 
-                            </td>
-                            <td>
+                                </td>
+                                <td>
 
-                                <table>
-                                    <tbody>
-                                        <tr v-bind:key="index" v-for="(config, index) in item.config">
-                                            <td>{{ config.key }} =</td>
-                                            <td>
+                                    <table>
+                                        <tbody>
+                                            <tr v-bind:key="index" v-for="(config, index) in item.config">
+                                                <td>{{ config.key }} =</td>
+                                                <td>
 
-                                                <EditorProperty :enabled="item._id === editItem"
-                                                    :object="item.config[index]" prop="value" :type="config.type" />
+                                                    <EditorProperty :enabled="item._id === editItem"
+                                                        :object="item.config[index]" prop="value" :type="config.type" />
 
-                                            </td>
-                                            <!--<td>({{ config.description }}) </td>-->
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                                </td>
+                                                <!--<td>({{ config.description }}) </td>-->
+                                            </tr>
+                                        </tbody>
+                                    </table>
 
-                            </td>
-                            <td>
+                                </td>
+                                <td>
 
-                                <TimestampsTable :data="item.timestamps" :mappings="{
-                                    'created': 'Created',
-                                    'updated': 'Updated'
-                                }" />
+                                    <TimestampsTable :data="item.timestamps" :mappings="{
+                                        'created': 'Created',
+                                        'updated': 'Updated'
+                                    }" />
 
-                            </td>
-                            <td>
-                                <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
-                                    @handleJson="handleJson">
-                                    <template v-slot:custom>
-                                        <button type="button" class="btn btn-outline-secondary" tooltip="Show configs"
-                                            flow="down" @click="settingsModalShow(item)">
-                                            <i class="fa-solid fa-gears"></i>
-                                        </button>
-                                    </template>
-                                </ActionsButtons>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                </td>
+                                <td>
+                                    <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
+                                        @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
+                                        @handleJson="handleJson">
+                                        <template v-slot:custom>
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                tooltip="Show configs" flow="down" @click="settingsModalShow(item)">
+                                                <i class="fa-solid fa-gears"></i>
+                                            </button>
+                                        </template>
+                                    </ActionsButtons>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </template>
             <template v-slot:add> Hello from apsdflkasjfdlasdf </template>
         </Tabs>

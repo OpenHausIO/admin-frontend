@@ -13,14 +13,14 @@ import Tabs from "@/components/Tabs.vue";
 import IconSelect from "@/components/IconSelect.vue";
 import JsonEditor from "@/components/JsonEditor.vue";
 //import Modal from "@/components/Modal.vue";
-import SelectionOrder from "@/components/SelectionOrder.vue";
+import MakroEditor from "@/components/MakroEditor.vue";
+import TriggerEditor from "@/components/TriggerEditor.vue";
 import TimestampsTable from "@/components/TimestampsTable.vue";
 
 import { request } from "../helper";
 import { addNotification } from "@/components/Notifications.vue";
 
 import { itemStore } from "../store.js";
-import { icon } from "@fortawesome/fontawesome-svg-core";
 const items = itemStore();
 
 export default defineComponent({
@@ -31,7 +31,8 @@ export default defineComponent({
         Tabs,
         JsonEditor,
         //Modal,
-        SelectionOrder,
+        MakroEditor,
+        TriggerEditor,
         TimestampsTable
     },
     data() {
@@ -49,6 +50,7 @@ export default defineComponent({
             sourceOptions: [],
             targetOptions: [],
             showMakrosModal: false,
+            showTriggersModal: false,
             triggerSelectionTargets: []
         };
     },
@@ -60,159 +62,6 @@ export default defineComponent({
             return items.endpoints.filter(({ enabled, commands }) => {
                 return enabled && commands?.length > 0;
             });
-        },
-        selectionOrderItems() {
-
-            /*
-                        sourceOptions: [
-                            {
-                                key: 'group1',
-                                label: 'Group 1',
-                                options: [
-                                    { key: 'item1', label: 'Item 1' },
-                                    { key: 'item2', label: 'Item 2' },
-                                    { key: 'item3', label: 'Item 3' }
-                                ],
-                            },
-                            {
-                                key: 'group2',
-                                label: 'Group 2',
-                                options: [
-                                    { key: 'item1', label: 'Item 1' },
-                                    { key: 'item2', label: 'Item 2' },
-                                    { key: 'item3', label: 'Item 3' },
-                                    { key: 'item4', label: 'Item 4' },
-                                ],
-                            },
-                            {
-                                key: 'group3',
-                                label: 'Group 3',
-                                options: [
-                                    { key: 'item1', label: 'Item 1' },
-                                    { key: 'item2', label: 'Item 2' },
-                                ],
-                            },
-                        ]
-            */
-
-            return this.endpoints.map((endpoint) => {
-                return {
-                    key: endpoint._id,
-                    label: `${endpoint.name} (${this.getDeviceById(endpoint.device)?.name})`,
-                    options: endpoint.commands.map((command) => {
-                        return {
-                            key: command._id,
-                            label: command.name
-                        };
-                    })
-                };
-            });
-
-        },
-        targetOrderItems() {
-            if (this.editItem && this.editItem?.makros) {
-                /*
-                                sourceOptions: [
-                                    {
-                                        key: 'group1',
-                                        label: 'Group 1',
-                                        options: [
-                                            { key: 'item1', label: 'Item 1' },
-                                            { key: 'item2', label: 'Item 2' },
-                                            { key: 'item3', label: 'Item 3' }
-                                        ],
-                                    },
-                                    {
-                                        key: 'group2',
-                                        label: 'Group 2',
-                                        options: [
-                                            { key: 'item1', label: 'Item 1' },
-                                            { key: 'item2', label: 'Item 2' },
-                                            { key: 'item3', label: 'Item 3' },
-                                            { key: 'item4', label: 'Item 4' },
-                                        ],
-                                    },
-                                    {
-                                        key: 'group3',
-                                        label: 'Group 3',
-                                        options: [
-                                            { key: 'item1', label: 'Item 1' },
-                                            { key: 'item2', label: 'Item 2' },
-                                        ],
-                                    },
-                                ]                
-                */
-
-                console.log("editItem changed", this.editItem)
-
-                return this.editItem.makros.filter(({ type }) => {
-                    return type === "command";
-                }).map(({ command, endpoint }) => {
-
-                    // get endpoint by id = endpoint
-                    // get device by id = endpoint.device
-                    // options[] = command...
-
-                    let { _id, name, device, commands } = this.getEndpointById(endpoint);
-                    device = this.getDeviceById(device);
-                    command = commands.find((cmd) => {
-                        return cmd._id === command;
-                    })
-
-                    return {
-                        key: _id,
-                        label: `${name} (${device.name})`,
-                        options: [{
-                            key: command._id,
-                            label: command.name
-                        }]
-                    };
-
-                });
-
-            } else {
-                return []
-            }
-        },
-        triggerSelectionSources() {
-
-            let webhookOptions = items.webhooks.map((webhook) => {
-                return {
-                    key: webhook._id,
-                    label: webhook.name
-                }
-            });
-
-            let stateOptions = items.endpoints.filter(({ states }) => {
-                return states.length > 0;
-            }).map(({ _id, name, states }) => {
-
-                return states.map((state) => {
-                    return {
-                        key: _id,
-                        label: `${name} - ${state.name}`
-                    }
-                });
-
-            }).flat();
-
-            return [{
-                key: "webhooks",
-                label: "Webhooks",
-                options: webhookOptions
-            }, {
-                key: "cronjob",
-                label: "Cronjob",
-                options: [{
-                    key: "cronjob",
-                    label: "Cronjob"
-                }]
-            }, {
-                key: "states",
-                label: "States",
-                options: stateOptions
-            }];
-
         }
     },
     methods: {
@@ -334,24 +183,11 @@ export default defineComponent({
             this.editItem = item;
             this.showMakrosModal = true;
         },
-        saveMakros() {
-
-            let makros = this.targetOrderItems.map(({ key, options }) => {
-                return options.map((option) => {
-
-                    // key = endpoint _id
-                    // option.key = command _id
-
-                    return {
-                        type: "command",
-                        endpoint: key,
-                        command: option.key,
-                        // _id
-                        //enabled: true
-                    }
-
-                });
-            }).flat();
+        editTriggers(item) {
+            this.editItem = item;
+            this.showTriggersModal = true;
+        },
+        saveMakros(makros) {
 
             console.log("Makros array", makros);
 
@@ -360,6 +196,17 @@ export default defineComponent({
 
             this.editItem = null;
             this.showMakrosModal = false;
+
+        },
+        saveTriggers(triggers) {
+
+            console.log("Triggers array", triggers);
+
+            this.editItem.triggers = triggers;
+            this.triggerUpdate(this.editItem);
+
+            this.editItem = null;
+            this.showTriggersModal = false;
 
         },
         addScene(event) {
@@ -400,126 +247,132 @@ export default defineComponent({
         <JsonEditor v-if="!!json" :item="json" @onClose="onClose" @onConfirm="onConfirm" />
 
         <!-- Why is the :key here needed, this re-renders the compnent and "messes up" the source selection target-->
-        <SelectionOrder title="Command Makros" :show="showMakrosModal" :key="targetOptions.length"
-            @close="showMakrosModal = false" @save="saveMakros" :sourceOptions="selectionOrderItems"
-            :targetOptions="targetOrderItems" />
+        <MakroEditor v-if="editItem && showMakrosModal" @close="showMakrosModal = false" @save="saveMakros"
+            :scene="editItem" />
 
-        <!--
-        <SelectionOrder title="Scene Triggers" :show="showTriggersModal" :key="triggerSelectionTargets.length"
-            @close="showTriggersModal = false" @save="saveTriggers" :sourceOptions="triggerSelectionSources"
-            :targetOptions="triggerSelectionTargets" />
-        -->
+        <TriggerEditor v-if="editItem && showTriggersModal" @close="showTriggersModal = false" @save="saveTriggers"
+            :scene="editItem" />
+
 
         <Tabs v-bind:items="tabItems">
             <template v-slot:overview>
-                <table class="table text-white">
-                    <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Icon</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Makros</th>
-                            <th scope="col">States</th>
-                            <!--<th scope="col">Triggers</th>-->
-                            <th scope="col" style="width: 300px">Timestmaps</th>
-                            <th scope="col">Visible</th>
-                            <th scope="col" style="width: 10px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in scenes">
-                            <th scope="row">{{ index + 1 }}</th>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon" type="text">
-                                    <template v-slot:editor="{ value }">
-                                        <IconSelect :item="item" :icon="value" />
-                                    </template>
-                                    <template v-slot:display="{ value }">
-                                        <i :class="value"></i>
-                                    </template>
-                                </EditorProperty>
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
-                                    type="text" />
-                            </td>
-                            <td>
+                <div class="table-card table-card-tabbed">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Icon</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Makros</th>
+                                <th scope="col">Triggers</th>
+                                <th scope="col">States</th>
+                                <th scope="col" style="width: 300px">Timestmaps</th>
+                                <th scope="col">Visible</th>
+                                <th scope="col">Enabled</th>
+                                <th scope="col" style="width: 10px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-bind:key="item._id" v-for="(item, index) in scenes">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="icon"
+                                        type="text">
+                                        <template v-slot:editor="{ value }">
+                                            <IconSelect :item="item" :icon="value" />
+                                        </template>
+                                        <template v-slot:display="{ value }">
+                                            <i :class="value"></i>
+                                        </template>
+                                    </EditorProperty>
+                                </td>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
+                                        type="text" />
+                                </td>
+                                <td>
 
-                                <button class="btn btn-outline-secondary" :disabled="item._id !== editItem"
-                                    @click="editMakros(item)">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </button>
+                                    <button class="btn btn-outline-secondary" :disabled="item._id !== editItem"
+                                        @click="editMakros(item)">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
 
-                            </td>
-                            <td>
+                                </td>
+                                <td>
 
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                            <td>Running:</td>
-                                            <td> {{ item.states.running }} </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Aborted:</td>
-                                            <td> {{ item.states.aborted }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Finished:</td>
-                                            <td> {{ item.states.finished }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Index:</td>
-                                            <td>{{ item.states.index }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                    <button class="btn btn-outline-secondary" :disabled="item._id !== editItem"
+                                        @click="editTriggers(item)">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
 
-                            </td>
-                            <!--
-                            <td>
+                                </td>
+                                <td>
 
-                                <button class="btn btn-outline-secondary" :disabled="item._id !== editItem"
-                                    @click="editTriggers(item)">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </button>
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>Running:</td>
+                                                <td> {{ item.states.running }} </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Aborted:</td>
+                                                <td> {{ item.states.aborted }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Finished:</td>
+                                                <td> {{ item.states.finished }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Index:</td>
+                                                <td>{{ item.states.index }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
 
-                            </td>
-                            -->
-                            <td>
+                                </td>
+                                <td>
 
-                                <TimestampsTable :data="item.timestamps" :mappings="{
-                                    'created': 'Created',
-                                    'updated': 'Updated',
-                                    'started': 'Started',
-                                    'aborted': 'Aborted',
-                                    'finished': 'Finished'
-                                }" />
+                                    <TimestampsTable :data="item.timestamps" :mappings="{
+                                        'created': 'Created',
+                                        'updated': 'Updated',
+                                        'started': 'Started',
+                                        'aborted': 'Aborted',
+                                        'finished': 'Finished'
+                                    }" />
 
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" v-bind:checked="item.visible"
-                                        v-model="item.visible" @change.lazy="triggerUpdate(item)" />
-                                </div>
-                            </td>
-                            <td>
-                                <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson">
-                                    <template v-slot:custom>
-                                        <button type="button" class="btn btn-outline-secondary" tooltip="Trigger scene"
-                                            flow="down" @click="triggerScene(item)">
-                                            <i class="fa-solid fa-eye"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary" tooltip="Abort scene"
-                                            flow="down" @click="abortScene(item)">
-                                            <i class="fa-solid fa-eye-slash"></i>
-                                        </button>
-                                    </template>
-                                </ActionsButtons>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" v-bind:checked="item.visible"
+                                            v-model="item.visible" @change.lazy="triggerUpdate(item)" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox"
+                                            v-bind:checked="item.enabled ?? true" v-model="item.enabled"
+                                            @change.lazy="triggerUpdate(item)" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <ActionsButtons :showEdit="true" :showRemove="true" :item="item"
+                                        @handleEdit="handleEdit" @handleRemove="handleRemove" @handleJson="handleJson">
+                                        <template v-slot:custom>
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                tooltip="Trigger scene" flow="down" @click="triggerScene(item)">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                tooltip="Abort scene" flow="down" @click="abortScene(item)">
+                                                <i class="fa-solid fa-eye-slash"></i>
+                                            </button>
+                                        </template>
+                                    </ActionsButtons>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </template>
             <template v-slot:add>
 
@@ -543,6 +396,7 @@ export default defineComponent({
 
             </template>
         </Tabs>
+
     </div>
 </template>
 

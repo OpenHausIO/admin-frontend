@@ -197,81 +197,82 @@ export default defineComponent({
 
         <Tabs v-bind:items="tabItems">
             <template v-slot:overview>
-                <table class="table text-white">
-                    <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">E-Mail</th>
-                            <th scope="col" v-if="!!editItem">Password</th>
-                            <th scope="col">Tokens</th>
-                            <th scope="col">Timestamps</th>
-                            <th scope="col" style="width: 10px">Admin</th>
-                            <th scope="col" style="width: 10px">Enabled</th>
-                            <th scope="col" style="width: 10px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-bind:key="item._id" v-for="(item, index) in users">
-                            <th scope="row">{{ index + 1 }}</th>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
-                                    type="text" />
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem && settings.expertSettings"
-                                    :object="item" prop="email" type="text" />
-                            </td>
-                            <td v-if="!!editItem">
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="password"
-                                    type="password" />
-                            </td>
-                            <td>
-                                <EditorProperty :enabled="item._id === editItem" :object="item" prop="tokens"
-                                    :disabled="true" type="textarea">
-                                    <template v-slot:editor="{ value }">
-                                        <textarea rows="3" width="500px" class="form-control bg-dark text-white"
-                                            v-bind:key="index" v-for="(token, index) in value" readonly
-                                            :value="token"></textarea>
-                                    </template>
-                                    <template v-slot:display="{ value }">
-                                        <ul style="padding-left: 1rem">
-                                            <li v-bind:key="index" v-for="(intent, index) in tokens(value, 20)">
-                                                {{ intent }}
-                                            </li>
-                                        </ul>
-                                    </template>
-                                </EditorProperty>
-                            </td>
-                            <td>
+                <div class="table-card table-card-tabbed">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">E-Mail</th>
+                                <th scope="col" v-if="!!editItem">Password</th>
+                                <th scope="col">Tokens</th>
+                                <th scope="col">Timestamps</th>
+                                <th scope="col" style="width: 10px">Admin</th>
+                                <th scope="col" style="width: 10px">Enabled</th>
+                                <th scope="col" style="width: 10px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-bind:key="item._id" v-for="(item, index) in users">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="name"
+                                        type="text" />
+                                </td>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem && settings.expertSettings"
+                                        :object="item" prop="email" type="text" />
+                                </td>
+                                <td v-if="!!editItem">
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="password"
+                                        type="password" />
+                                </td>
+                                <td>
+                                    <EditorProperty :enabled="item._id === editItem" :object="item" prop="tokens"
+                                        :disabled="true" type="textarea">
+                                        <template v-slot:editor="{ value }">
+                                            <textarea rows="3" width="500px" class="form-control bg-dark text-white"
+                                                v-bind:key="index" v-for="(token, index) in value" readonly
+                                                :value="token"></textarea>
+                                        </template>
+                                        <template v-slot:display="{ value }">
+                                            <ul style="padding-left: 1rem">
+                                                <li v-bind:key="index" v-for="(intent, index) in tokens(value, 20)">
+                                                    {{ intent }}
+                                                </li>
+                                            </ul>
+                                        </template>
+                                    </EditorProperty>
+                                </td>
+                                <td>
 
-                                <TimestampsTable :data="item.timestamps" :mappings="{
-                                    'created': 'Created',
-                                    'updated': 'Updated',
-                                    'login': 'Login',
-                                    'logout': 'Logout'
-                                }" />
+                                    <TimestampsTable :data="item.timestamps" :mappings="{
+                                        'created': 'Created',
+                                        'updated': 'Updated',
+                                        'login': 'Login',
+                                        'logout': 'Logout'
+                                    }" />
 
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" :disabled="!item.enabled"
-                                        v-bind:checked="item.admin" v-model="item.admin"
-                                        @change.lazy="triggerUpdate(item)" />
-                                </div>
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"
-                                        v-model="item.enabled" v-on:click="item.admin = false"
-                                        @change.lazy="triggerUpdate(item)" />
-                                </div>
-                            </td>
-                            <td>
-                                <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
-                                    @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
-                                    @handleJson="handleJson">
-                                    <!--
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" :disabled="!item.enabled"
+                                            v-bind:checked="item.admin" v-model="item.admin"
+                                            @change.lazy="triggerUpdate(item)" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" v-bind:checked="item.enabled"
+                                            v-model="item.enabled" v-on:click="item.admin = false"
+                                            @change.lazy="triggerUpdate(item)" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <ActionsButtons :showEdit="true" :showInfo="true" :showRemove="true" :item="item"
+                                        @handleEdit="handleEdit" @handleInfo="handleInfo" @handleRemove="handleRemove"
+                                        @handleJson="handleJson">
+                                        <!--
                                     <template v-slot:custom>
                                         <button type="button" class="btn btn-outline-warning" tooltip="Logout User"
                                             flow="down" @click="handleLogout(item)">
@@ -279,11 +280,12 @@ export default defineComponent({
                                         </button>
                                     </template>
                                     -->
-                                </ActionsButtons>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                    </ActionsButtons>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </template>
             <template v-slot:add>
 

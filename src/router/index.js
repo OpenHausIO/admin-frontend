@@ -100,15 +100,20 @@ const system = [/*{
         name: "Prune",
         icon: "fa-solid fa-broom",
         component: () => import("../views/system.prune.vue")
-    }/*, {
+    }, {
         path: "/system/connector",
         name: "Connector",
         icon: "fa-solid fa-arrow-right-arrow-left",
         component: () => import("../views/system.connector.vue")
-    }*/];
+    }, {
+        path: "/system/about",
+        name: "About",
+        icon: "fa-solid fa-circle-info",
+        component: () => import("../views/system.information.vue")
+    }];
 
 
-const test = [{
+const test = [/*{
     path: "/test/selection-order",
     name: "SelectionOrder",
     component: () => import("../views/test.selection-order.vue")
@@ -124,7 +129,7 @@ const test = [{
     path: "/test/alarm",
     name: "Alarm",
     component: () => import("../views/test.alarm.vue")
-}];
+}*/];
 
 
 const router = createRouter({

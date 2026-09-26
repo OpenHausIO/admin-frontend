@@ -95,7 +95,7 @@ export default {
 </script>
 
 <template>
-    <div class="p-0 label-container" @click="setFocus" style="max-width:300px" :class="[
+    <div class="p-0 label-container" @click="setFocus" :class="[
         { 'form-control bg-dark p-1': edit },
         { 'border border-danger': invalid },
     ]" :style="{ height: edit ? '200px' : '50px' }">

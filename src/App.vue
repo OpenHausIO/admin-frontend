@@ -26,6 +26,7 @@ export default defineComponent({
     data() {
         return {
             overlay: false,
+            menuOpen: false,
             dateformats: [
                 "yyyy.mm.dd - HH:MM",
                 "yyyy.mm.dd - HH:MM:ss",
@@ -51,6 +52,12 @@ export default defineComponent({
             }*/]
         };
     },
+    watch: {
+        // Mobile-Menü nach jeder Navigation schließen
+        $route() {
+            this.menuOpen = false;
+        }
+    },
     methods: {
         subIsActive(input) {
             const paths = Array.isArray(input) ? input : [input];
@@ -63,6 +70,8 @@ export default defineComponent({
             const user = userStore();
 
             await user.logout();
+
+            this.menuOpen = false;
 
             addNotification("<b>Successful Logout:</b><br />You have been logged out", {
                 type: "success"
@@ -150,7 +159,8 @@ export default defineComponent({
                 return "";
             }
 
-            return "mt-3";
+            //return "mt-3";
+
         }
     }
 });
@@ -174,21 +184,23 @@ export default defineComponent({
     <ProgressBar></ProgressBar>
     <!-- PROGRESSBAR -->
 
+    <!-- MOBILE TOPBAR (nur unter md sichtbar) -->
+    <nav class="navbar d-md-none mobile-topbar px-3" style="box-shadow: 0 .5rem .7rem rgba(0,0,0,.3) !important">
+        <span class="navbar-brand mb-0">{{ $route.name }}</span>
+        <button class="btn mobile-toggler ms-auto" type="button" @click="menuOpen = !menuOpen" aria-controls="sidebar"
+            :aria-expanded="menuOpen" aria-label="Toggle navigation">
+            <i class="fa-solid" :class="menuOpen ? 'fa-xmark' : 'fa-bars'"></i>
+        </button>
+    </nav>
+    <!-- MOBILE TOPBAR -->
+
     <div class="container-fluid">
         <div class="row">
-            <div class="col-2 border-end p-0"
-                style="border-right-color: #000 !important; overflow-x: scroll; height: 100vh">
-                <ul class="nav flex-column">
+            <div id="sidebar" class="col-12 col-md-3 col-xl-2 p-3 sidebar d-md-block" :class="{ 'd-none': !menuOpen }">
 
-                    <li class="nav-item hide">
-                        <Card>
-                            <button class="navbar-toggler" type="button">
-                                <i class="fa-solid fa-bars"></i>
-                            </button>
-                        </Card>
-                    </li>
+                <!-- DASHBOARD & APP -->
+                <ul class="nav flex-column mb-3 sidebar-nav">
 
-                    <!-- DASHBOARD & APP -->
                     <li class="nav-item">
                         <Card>
                             <a class="nav-link" href="/user/">
@@ -218,15 +230,15 @@ export default defineComponent({
                             </a>
                         </Card>
                     </li>
-                    <!-- DASHBOARD & APP -->
+
+                </ul>
+                <!-- DASHBOARD & APP -->
+
+                <!-- COMPONENTS -->
+                <ul class="nav flex-column mb-3 sidebar-nav">
 
                     <li class="nav-item">
-                        <hr />
-                    </li>
-
-                    <!-- COMPONENTS -->
-                    <li class="nav-item">
-                        <Card @click="collapsed.components = !collapsed.components" style="cursor:pointer">
+                        <Card @click="collapsed.components = !collapsed.components" style="cursor:pointer" class="p-2">
                             <div class="d-flex align-items-center">
                                 <span>Components</span>
                                 <i class="fa-solid fa-angle-down ms-auto" v-if="collapsed.components"></i>
@@ -235,7 +247,7 @@ export default defineComponent({
                         </Card>
                     </li>
 
-                    <div v-if="!collapsed.components">
+                    <template v-if="!collapsed.components">
                         <RouterLink custom v-bind:to="route.path" v-slot="{ href, navigate, isActive }"
                             v-bind:key="route.path" v-for="route in components">
                             <li class="nav-item">
@@ -248,16 +260,14 @@ export default defineComponent({
                                 </Card>
                             </li>
                         </RouterLink>
-                    </div>
-                    <!-- COMPONENTS -->
+                    </template>
+                </ul>
+                <!-- COMPONENTS -->
 
+                <!-- PAGES/MANIFESTS -->
+                <ul class="nav flex-column mb-3 sidebar-nav">
                     <li class="nav-item">
-                        <hr />
-                    </li>
-
-                    <!-- PAGES/MANIFESTS -->
-                    <li class="nav-item">
-                        <Card @click="collapsed.manifests = !collapsed.manifests" style="cursor:pointer">
+                        <Card @click="collapsed.manifests = !collapsed.manifests" style="cursor:pointer" class="p-2">
                             <div class="d-flex align-items-center">
                                 <span>Pages</span>
                                 <i class="fa-solid fa-angle-down ms-auto" v-if="collapsed.manifests"></i>
@@ -266,7 +276,7 @@ export default defineComponent({
                         </Card>
                     </li>
 
-                    <div v-if="!collapsed.manifests">
+                    <template v-if="!collapsed.manifests">
 
                         <RouterLink v-for="manifest in manifests" :key="manifest.name" custom
                             v-slot="{ href, navigate, isActive }"
@@ -302,16 +312,15 @@ export default defineComponent({
                             <Card>No plugin provided pages</Card>
                         </li>
 
-                    </div>
-                    <!-- PAGES/MANIFESTS -->
+                    </template>
+                </ul>
+                <!-- PAGES/MANIFESTS -->
+
+                <!-- SYSTEM -->
+                <ul class="nav flex-column mb-3 sidebar-nav">
 
                     <li class="nav-item">
-                        <hr />
-                    </li>
-
-                    <!-- SYSTEM -->
-                    <li class="nav-item">
-                        <Card @click="collapsed.system = !collapsed.system" style="cursor:pointer">
+                        <Card @click="collapsed.system = !collapsed.system" style="cursor:pointer" class="p-2">
                             <div class="d-flex align-items-center">
                                 <span>System</span>
                                 <i class="fa-solid fa-angle-down ms-auto" v-if="collapsed.system"></i>
@@ -320,7 +329,7 @@ export default defineComponent({
                         </Card>
                     </li>
 
-                    <div v-if="!collapsed.system">
+                    <template v-if="!collapsed.system">
                         <RouterLink custom v-bind:to="route.path" v-slot="{ href, navigate, isActive }"
                             v-bind:key="route.path" v-for="route in system">
                             <li class="nav-item">
@@ -333,16 +342,15 @@ export default defineComponent({
                                 </Card>
                             </li>
                         </RouterLink>
-                    </div>
-                    <!-- SYSTEM -->
+                    </template>
 
-                    <li class="nav-item">
-                        <hr />
-                    </li>
+                </ul>
+                <!-- SYSTEM -->
 
-                    <!-- SETTINGS -->
+                <!-- SETTINGS -->
+                <ul class="nav flex-column sidebar-nav">
                     <li class="nav-item">
-                        <Card @click="collapsed.settings = !collapsed.settings" style="cursor:pointer">
+                        <Card @click="collapsed.settings = !collapsed.settings" style="cursor:pointer" class="p-2">
                             <div class="d-flex align-items-center">
                                 <span>Settings</span>
                                 <i class="fa-solid fa-angle-down ms-auto" v-if="collapsed.settings"></i>
@@ -351,7 +359,7 @@ export default defineComponent({
                         </Card>
                     </li>
 
-                    <div v-if="!collapsed.settings">
+                    <template v-if="!collapsed.settings">
                         <li class="nav-item">
                             <Card class="p-2">
                                 <div class="form-check form-switch" style="cursor: pointer !important">
@@ -375,23 +383,13 @@ export default defineComponent({
                                 </select>
                             </Card>
                         </li>
-                    </div>
-                    <!-- SETTINGS -->
-
-                    <li class="nav-item">
-                        <hr />
-                    </li>
-
-
-                    <li class="nav-item">
-                        <Card>
-                            Version: v{{ version }}
-                        </Card>
-                    </li>
+                    </template>
 
                 </ul>
+                <!-- SETTINGS -->
+
             </div>
-            <div class="col-10" style="overflow-x: scroll; max-height: 100vh">
+            <div class="col-12 col-md-9 col-xl-10 ps-md-0 p-3 main-view">
 
                 <!-- VIEW -->
                 <RouterView :class="addMarginOnTop" />
@@ -462,5 +460,149 @@ a.external-window-link {
     border: 1px solid var(--bs-primary);
     border-radius: 50%;
     font-size: 10px;
+}
+
+/* ---------- LAYOUT / RESPONSIVE ---------- */
+
+/* Mobile Topbar mit Hamburger, bleibt beim Scrollen oben */
+.mobile-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background-color: #101418;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.mobile-toggler {
+    border: 1px solid var(--bs-border-color);
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: .4rem .6rem;
+}
+
+.main-view {
+    overflow-x: auto;
+}
+
+/* Ab md: Sidebar und View scrollen jeweils unabhängig auf voller Höhe */
+@media (min-width: 768px) {
+    .sidebar {
+        height: 100vh;
+        overflow-y: auto;
+    }
+
+    .main-view {
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+}
+
+/* ---------- SIDEBAR ---------- */
+
+ul.sidebar-nav {
+    border-radius: .375rem;
+    background-color: #101418;
+    /*border: 1px solid #000;*/
+}
+
+ul.sidebar-nav>li>* {
+    border-radius: 0 !important;
+}
+
+ul.sidebar-nav>li:first-child>* {
+    border-top-left-radius: .375rem !important;
+    border-top-right-radius: .375rem !important;
+}
+
+ul.sidebar-nav>li:last-child>* {
+    border-bottom-left-radius: .375rem !important;
+    border-bottom-right-radius: .375rem !important;
+}
+
+/* ---------- TABLES ---------- */
+/* Rahmen, Rundung und Hintergrund sitzen am Wrapper, nicht an der Tabelle.
+   Kein overflow am Desktop, damit Tooltips über den Rand hinausragen dürfen */
+.table-card {
+    border: 1px solid var(--bs-border-color);
+    border-radius: .375rem;
+    background-color: #101418;
+}
+
+/* Tabelle und Zellen transparent, damit die Rundung der Card sichtbar bleibt */
+.table-card table.table {
+    --bs-table-bg: transparent;
+    background-color: transparent !important;
+}
+
+/* Horizontal scrollen nur auf kleinen Bildschirmen */
+@media (max-width: 991.98px) {
+    .table-card {
+        overflow-x: auto;
+    }
+}
+
+/* Direkt unter Tabs: oben links eckig, dort schließen die Tabs an */
+.table-card-tabbed {
+    border-top-left-radius: 0;
+}
+
+/* Letzte Zeile ohne eigene Unterkante, sonst doppelt mit dem Wrapper-Rahmen */
+.table-card .table>tbody>tr:last-child>* {
+    border-bottom: 0;
+}
+
+.table-card .table>tbody>tr>* {
+    vertical-align: top;
+}
+
+/* Reine Textzellen (inkl. Switches) um die halbe Differenz zwischen
+   Button-Höhe (2.375rem) und Zeilenhöhe (1.5rem) nach unten schieben,
+   dann steht die erste Textzeile mittig neben Buttons/Inputs */
+.table-card .table>tbody>tr> :is(td, th):not(:has(.btn, .form-control, .form-select, input:not(.form-check-input), textarea, select, table)) {
+    padding-top: calc(.5rem + (2.375rem - 1.5rem) / 2);
+}
+
+
+
+.pane {
+    background-color: #101418 !important;
+    border: 1px solid #000;
+    border-radius: .375rem;
+}
+
+:root {
+    --topbar-height: 56px;
+    --bg-color: #1a2026;
+}
+
+/* Mobile Topbar mit Hamburger, bleibt beim Scrollen oben */
+.mobile-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    height: var(--topbar-height);
+    background-color: #101418 !important;
+    border-bottom: 1px solid #000;
+}
+
+.sidebar {
+    background-color: var(---bg-color);
+}
+
+/* Unter md: Sidebar legt sich als Overlay über den Content */
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: fixed;
+        top: var(--topbar-height);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1020;
+        /* unter der Topbar, über dem Content */
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        /* Scrollen im Menü scrollt nicht die Seite dahinter */
+        background-color: var(--bg-color);
+    }
 }
 </style>

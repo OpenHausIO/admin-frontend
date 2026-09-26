@@ -18,7 +18,7 @@ export default defineComponent({
             required: true,
         },
         icon: {
-            type: String,
+            type: [String, null],
             required: true,
         },
     },
@@ -83,8 +83,8 @@ export default defineComponent({
 
 
 <template>
-    <Modal v-if="showPopup" :visible="showPopup" @close="showPopup = false" :classes="{ body: 'p-0' }"
-        @confirm="setIcon()" title="Select icon">
+    <Modal v-if="showPopup" :visible="showPopup" :classes="{ body: 'p-0' }" title="Select icon">
+
         <template v-slot:body>
 
             <Tabs v-bind:items="tabItems">
@@ -117,9 +117,19 @@ export default defineComponent({
             </Tabs>
 
         </template>
+        <template v-slot:footer>
+
+            <button type="button" class="btn btn-outline-warning"
+                @click="item.icon = null; showPopup = false;">Unset</button>
+            <button type="button" class="btn btn-outline-secondary" @click="showPopup = false">Close</button>
+            <button type="button" class="btn btn-outline-primary" @click="setIcon()">Save</button>
+
+        </template>
+
     </Modal>
     <button type="button" class="btn btn-outline-secondary text-white" v-on:click="showPopup = !showPopup">
-        <i :class="iconValue"></i>
+        <i v-if="iconValue" :class="iconValue"></i>
+        <span v-else class="text-warning">U</span>
     </button>
 </template>
 

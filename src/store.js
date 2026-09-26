@@ -190,7 +190,7 @@ const itemStore = defineStore("items", {
     }
 });
 
-const settingsStore = defineStore("settings", {
+const settingsStore = defineStore("config", {
     state() {
         return {
             dateformat: "yyyy.mm.dd - HH:MM:ss",

@@ -4,7 +4,7 @@ import { defineConfig } from "vite"
 import vue from "@vitejs/plugin-vue"
 
 import { config } from "dotenv";
-config();
+config({ quiet: true });
 
 const {
     BACKEND_HOST,
@@ -33,8 +33,14 @@ const redirect = () => ({
     configureServer(server) {
         server.middlewares.use("/user", (req, res, next) => {
 
+            if (req.originalUrl.startsWith("/user/about.json")) {
+                return next();
+            }
+
+            let [host] = req.headers.host.split(":");
+
             res.writeHead(302, {
-                Location: "http://localhost:3001/user/"
+                Location: `http://${host}:3001/user/`
             });
 
             res.end();
@@ -79,6 +85,10 @@ export default defineConfig({
                         proxyReq.setHeader("Host", `${BACKEND_HOST}:${BACKEND_PORT}`);
                     });
                 }
+            },
+            "/user/about.json": {
+                target: "http://127.0.0.1:3001",
+                changeOrigin: true
             }
         }
     },

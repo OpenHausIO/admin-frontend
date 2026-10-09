@@ -163,7 +163,7 @@ export {
   border-top: 0;
   */
     background-color: rgba(0, 0, 0, 0.65);
-
+    backdrop-filter: blur(5px);
 }
 
 .toast-container {

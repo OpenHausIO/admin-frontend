@@ -75,8 +75,8 @@ function request(url, options, cb) {
         let id = null;
 
         fetch(url, {
-            ...options,
-            signal: controller.signal
+            signal: controller.signal,
+            ...options
         }).then((response) => {
 
             if (!response.ok) {

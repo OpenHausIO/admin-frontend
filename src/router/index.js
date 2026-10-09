@@ -109,7 +109,7 @@ const system = [/*{
         path: "/system/about",
         name: "About",
         icon: "fa-solid fa-circle-info",
-        component: () => import("../views/system.information.vue")
+        component: () => import("../views/system.about.vue")
     }];
 
 

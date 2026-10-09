@@ -1,17 +1,30 @@
 <script>
-import { defineComponent } from 'vue';
+import { defineComponent } from "vue";
 import { request } from "@/helper.js";
+import dateFormat from "dateformat";
 
 import { addNotification } from "@/components/Notifications.vue";
+import { settingsStore } from "../store";
 
 export default defineComponent({
+    setup() {
+
+        let settings = settingsStore();
+
+        return {
+            settings
+        };
+
+    },
     data() {
         return {
             pair: [],
             data: {},
             versions: {},
             usage: {},
+            now: Date.now(),
             interval: null,
+            usageInterval: null,
             abouts: {
                 user: null,
                 admin: null,
@@ -23,6 +36,12 @@ export default defineComponent({
 
         this.fetchAbouts();
 
+        // Reaktive Zeit jede Sekunde aktualisieren -> uptime wird neu berechnet
+        this.interval = setInterval(() => {
+            this.now = Date.now();
+        }, 1000);
+
+        /*
         request("/api/system/info/versions", (err, data) => {
             if (err) {
 
@@ -35,7 +54,7 @@ export default defineComponent({
             }
         });
 
-        this.interval = setInterval(() => {
+        this.usageInterval = setInterval(() => {
             request("/api/system/info/usage", (err, data) => {
                 if (err) {
 
@@ -48,16 +67,20 @@ export default defineComponent({
                 }
             });
         }, 3000);
+        */
 
     },
     unmounted() {
         clearInterval(this.interval);
+        clearInterval(this.usageInterval);
     },
     methods: {
         fetchAbouts() {
 
             let queries = ["/api", "/user", "/admin"].map((base) => {
-                return request(`${base}/about.json`);
+                return request(`${base}/about.json`, {
+                    signal: AbortSignal.timeout(3000)
+                });
             });
 
             Promise.allSettled(queries).then(([backend, user, admin]) => {
@@ -87,6 +110,37 @@ export default defineComponent({
             });
 
         }
+    },
+    computed: {
+        started() {
+
+            if (!this.abouts?.backend) {
+                return null;
+            }
+
+            return dateFormat(this.abouts.backend.start, this.settings.dateformat);
+
+        },
+        uptime() {
+
+            const start = new Date(this.abouts?.backend?.start).getTime();
+
+            if (Number.isNaN(start)) {
+                return null;
+            }
+
+            const total = Math.max(0, Math.floor((this.now - start) / 1000));
+
+            const days = Math.floor(total / 86400);
+            const hours = Math.floor((total % 86400) / 3600);
+            const minutes = Math.floor((total % 3600) / 60);
+            const seconds = total % 60;
+
+            const pad = (n) => String(n).padStart(2, "0");
+
+            return `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+        }
     }
 });
 </script>
@@ -108,6 +162,22 @@ export default defineComponent({
 
                     <dt>User UI</dt>
                     <dd>{{ abouts?.user?.version }}</dd>
+                </dl>
+
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="pane p-3">
+
+                <h5>Uptime:</h5>
+
+                <dl class="versions mb-0">
+                    <dt>Start</dt>
+                    <dd>{{ started }}</dd>
+
+                    <dt>Uptime</dt>
+                    <dd>{{ uptime }}</dd>
                 </dl>
 
             </div>

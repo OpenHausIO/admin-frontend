@@ -1,0 +1,439 @@
+<script setup>
+import { settingsStore } from "../store.js";
+const settings = settingsStore();
+</script>
+
+<script>
+import { defineComponent } from 'vue';
+
+import Tabs from "@/components/Tabs.vue";
+import Modal from "@/components/Modal.vue";
+import { addNotification } from "@/components/Notifications.vue";
+import { request } from "../helper.js";
+
+import { setPrecent, fadeOut, data } from "../components/Progressbar.vue";
+
+export default defineComponent({
+    components: {
+        Tabs,
+        Modal
+    },
+    data() {
+        return {
+            tabItems: [{
+                name: "Export",
+                id: "export",
+            }, {
+                name: "Import",
+                id: "import",
+            }],
+            exportData: {
+                includes: ["database", "plugins", "env"],
+                encrypt: false,
+                encode: true,
+                showModal: false,
+                keys: {
+                    key: null,
+                    iv: null
+                }
+            },
+            importData: {
+                restore: [],
+                encrypt: false,
+                decode: true,
+                truncate: true,
+                skipDuplicates: true,
+                showModal: false,
+                fileBuffer: null,
+                keys: {
+                    key: null,
+                    iv: null
+                }
+            },
+            eventSource: null
+        };
+    },
+    methods: {
+        /*
+        openSSEprogress() {
+
+            data.color = "primary";
+
+            let token = localStorage.getItem("x-auth-token");
+            const eventSource = new EventSource(`/api/system/backup/progress?x-auth-token=${token}`);
+
+            eventSource.onmessage = (event) => {
+
+                const { precent = 0 } = JSON.parse(event.data);
+                setPrecent(Math.floor(precent));
+
+            };
+
+            eventSource.onerror = (error) => {
+                fadeOut();
+                eventSource.close();
+            };
+
+        },
+        */
+        openSSEprogress() {
+
+            // Vorherige Verbindung schließen, falls vorhanden
+            if (this.eventSource) {
+                this.eventSource.close();
+            }
+
+            data.color = "primary";
+            let token = localStorage.getItem("x-auth-token");
+            this.eventSource = new EventSource(`/api/system/backup/progress?x-auth-token=${token}`);
+
+            this.eventSource.onmessage = (event) => {
+                const { precent = 0 } = JSON.parse(event.data);
+                setPrecent(Math.floor(precent));
+            };
+
+            this.eventSource.onerror = (error) => {
+                fadeOut();
+                this.eventSource.close();
+                this.eventSource = null;
+            };
+
+        },
+        handleCloseExport() {
+            this.exportData.keys = {
+                key: null,
+                iv: null
+            }
+            this.exportData.showModal = false;
+        },
+        download() {
+
+            addNotification("Prepare backup process.<br />Collecting files...", {
+                type: "primary"
+            });
+
+            let { encrypt, includes, encode } = this.exportData;
+            let query = `encrypt=${encrypt}&encode=${encode}&`;
+
+            query += includes.map((intent) => {
+                return `includes[]=${intent}`;
+            }).join("&");
+
+            let blobUrl = null;
+
+            request(`/api/system/backup/export?${query}`, {
+                method: "POST",
+            }).then(res => {
+
+                if (res.status === 200) {
+
+                    addNotification("Backup process started<br />This may take a while. Do not close/leave this page!", {
+                        type: "primary"
+                    });
+
+                    // receive pgroess events
+                    // update progress bar
+                    this.openSSEprogress();
+
+                }
+
+                // FIXME: This is broken, beacuse blob is returned and not the response object from fetch
+                // Uncaught (in promise) TypeError: can't access property "get", o.headers is undefined
+                if (encrypt) {
+                    this.exportData.keys.key = res.headers.get("x-encryption-key");
+                    this.exportData.keys.iv = res.headers.get("x-encryption-iv");
+                    this.exportData.showModal = true;
+                }
+
+                return res;
+
+            }).then((res) => {
+
+                return res.blob();
+
+            }).then(blob => {
+
+                blobUrl = URL.createObjectURL(blob);
+                let a = document.createElement("a");
+
+                a.href = blobUrl;
+                a.download = `OpenHaus-${Date.now()}.tgz`;
+                document.body.appendChild(a);
+                a.click();
+
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+
+                addNotification(`Backup file "${a.download}" downloaded`, {
+                    type: "success",
+                    dismiss: false
+                });
+
+            }).catch(async (err) => {
+
+                if (blobUrl) {
+                    URL.revokeObjectURL(blobUrl);
+                    blobUrl = null;
+                }
+
+                if (err.response.status === 423) {
+
+                    let res = await err.response.json();
+
+                    addNotification(`Operation "${res.progress.operation}" in progress.<br />Backup process could not be started`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                } else {
+
+                    console.error("Couldn not start backup process", err)
+
+                    addNotification(`Could not start backup process.<br />Error: ${err.message}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                }
+
+            });
+
+        },
+        handleFileUpload() {
+            if (this.importData.fileBuffer) {
+
+                let { encrypt, decode, truncate, skipDuplicates, restore, keys } = this.importData;
+                let query = `encrypt=${encrypt}&decode=${decode}&truncate=${truncate}&skipDuplicates=${skipDuplicates}`;
+
+                /*
+                // TODO: to be implmeented in the backend
+                query += restore.map((intent) => {
+                    return `includes[]=${intent}`;
+                }).join("&");
+                */
+
+                let headers = {
+                    "content-type": "application/octet-stream",
+                    // TODO: set decrpty header values
+                };
+
+                if (this.importData.encrypt) {
+                    headers["x-encryption-key"] = keys.key;
+                    headers["x-encryption-iv"] = keys.iv;
+                }
+
+                // receive pgroess events
+                // update progress bar
+                this.openSSEprogress();
+
+                request(`/api/system/backup/import?${query}`, {
+                    method: "POST",
+                    headers,
+                    body: this.importData.fileBuffer,
+                }).then(() => {
+
+                    this.importData.fileBuffer = null;
+                    this.importData.keys.iv = null;
+                    this.importData.keys.key = null;
+
+                    addNotification("Restore completed<br />Restart the application to apply changes", {
+                        type: "success",
+                        dismiss: false
+                    });
+
+                }).catch((err) => {
+
+                    console.error("error restoring:", err)
+
+                    addNotification(`Restore failed!<br />Error: ${err}`, {
+                        type: "danger",
+                        dismiss: false
+                    });
+
+                });
+
+            } else {
+
+                console.warn("No backup file content available");
+
+            }
+        },
+        handleFileChange(event) {
+
+            addNotification("Restore process started<br />This may take a while. Do not close/leave this page!", {
+                type: "primary"
+            });
+
+            const file = event.target.files[0];
+
+            if (file) {
+
+                const reader = new FileReader();
+
+                reader.onload = () => {
+
+                    const fileContent = reader.result;
+                    this.importData.fileBuffer = fileContent;
+
+                    console.log('Dateiinhalt:', fileContent);
+
+                    //this.uploadFile(fileContent);
+                    // TODO: check if encrypted or not/read header/first few bytes "magic number"
+
+                    if (this.importData.encrypt) {
+                        this.importData.showModal = true;
+                    } else {
+                        this.handleFileUpload();
+                    }
+
+                };
+
+                reader.readAsArrayBuffer(file);
+
+            }
+        },
+        upload() {
+            this.$refs.fileInput.click();
+        },
+        handleCloseImport() {
+            this.importData.showModal = false;
+            this.handleFileUpload();
+        }
+    },
+    beforeUnmount() {
+        if (this.eventSource) {
+            this.eventSource.close();
+            this.eventSource = null;
+        }
+    }
+});
+</script>
+
+<template>
+    <Tabs v-bind:items="tabItems">
+
+        <!-- EXPORT -->
+        <template v-slot:export>
+
+            <Modal :visible="exportData.showModal" :title="'Encryption keys'">
+                <template v-slot:body>
+
+                    <div class="alert alert-danger" role="alert">
+                        <h5 class="text-danger text-decoration-underline">Warning!</h5>
+                        Store these keys/values somehwere.<br>
+                        Or else you cant decrypt/import the backup!<br />
+                        This message cant be displayed again.
+                    </div>
+
+                    IV: {{ exportData.keys.iv }}<br />
+                    KEY: {{ exportData.keys.key }}
+
+                </template>
+                <template v-slot:footer>
+                    <button type="button" class="btn btn-outline-secondary" @click="handleCloseExport">Close</button>
+                </template>
+            </Modal>
+
+            <div class="form-check form-switch" v-if="settings.expertSettings">
+                <label>
+                    <input class="form-check-input" type="checkbox" v-model="exportData.encode" />
+                    Encode .env values
+                </label>
+            </div>
+
+            <div class="form-check form-switch hide">
+                <label>
+                    <input class="form-check-input" type="checkbox" v-model="exportData.encrypt" />
+                    Encrypt *.tgz archive
+                </label>
+            </div>
+
+            <hr class="my-3" v-if="settings.expertSettings" />
+
+            <div class="form-check form-switch" v-if="settings.expertSettings">
+                <label>
+                    <input class="form-check-input" type="checkbox" v-model="exportData.includes" value="database" />
+                    Include Database
+                </label>
+            </div>
+
+            <div class="form-check form-switch" v-if="settings.expertSettings">
+                <label>
+                    <input class="form-check-input" type="checkbox" v-model="exportData.includes" value="plugins" />
+                    Include Plugins files
+                </label>
+            </div>
+
+            <div class="form-check form-switch" v-if="settings.expertSettings">
+                <label>
+                    <input class="form-check-input" type="checkbox" v-model="exportData.includes" value="env" />
+                    Include .env file
+                </label>
+            </div>
+
+            <button class="btn btn-outline-primary" :class="{ 'mt-3': settings.expertSettings }"
+                @click="download">Download</button>
+
+        </template>
+        <!-- EXPORT -->
+
+        <!-- IMPORT -->
+        <template v-slot:import>
+
+            <Modal :visible="importData.showModal" :title="'Encryption keys'">
+                <template v-slot:body>
+
+                    <div class="mb-3">
+                        <label class="form-label">IV:</label>
+                        <input type="text" class="form-control" v-model="importData.keys.iv">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">KEY:</label>
+                        <input type="text" class="form-control" v-model="importData.keys.key">
+                    </div>
+
+                </template>
+                <template v-slot:footer>
+                    <button type="button" class="btn btn-outline-primary" @click="handleCloseImport">Save</button>
+                </template>
+            </Modal>
+
+            <input type="file" ref="fileInput" class="hide" @change="handleFileChange">
+
+            <div class="form-check form-switch" v-if="settings.expertSettings">
+                <label>
+                    <input class="form-check-input" type="checkbox" v-model="importData.decode" />
+                    Decode .env values
+                </label>
+            </div>
+
+            <div class="form-check form-switch" v-if="settings.expertSettings">
+                <label>
+                    <input class="form-check-input" type="checkbox" v-model="importData.truncate" />
+                    Truncate database & files (tabula rasa)
+                </label>
+            </div>
+
+            <div class="form-check form-switch" v-if="settings.expertSettings">
+                <label>
+                    <input class="form-check-input" type="checkbox" v-model="importData.skipDuplicates" />
+                    Skip duplicates (Skip same databse _id items)
+                </label>
+            </div>
+
+            <hr class="my-3" v-if="settings.expertSettings" />
+
+            <div class="form-check form-switch">
+                <label>
+                    <input class="form-check-input" type="checkbox" v-model="importData.encrypt" />
+                    Decrypt (backup is encrypted)
+                </label>
+            </div>
+
+            <button class="btn btn-outline-primary mt-3" @click="upload">Upload</button>
+
+        </template>
+        <!-- IMPORT -->
+
+    </Tabs>
+</template>

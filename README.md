@@ -19,6 +19,14 @@ See [Vite Configuration Reference](https://vitejs.dev/config/).
 npm install
 ```
 
+### Create Admin account
+```sh
+curl -v -X PUT --unix-socket /tmp/open-haus.sock \
+   http://127.0.0.1:8080/api/users \
+   -H "Content-Type: application/json" \
+   -d '{"email":"info@example.com","password":"Pa$$w0rd", "name":"Administrator", "enabled": "true", "admin": "true"}'
+```
+
 ### Compile and Hot-Reload for Development
 
 ```sh
@@ -31,50 +39,46 @@ npm run dev
 npm run build
 ```
 
+## Docker
+
+### Environment variables
+| Name             | Default value                    | Description                                          |
+| ---------------- | -------------------------------- | ---------------------------------------------------- |
+| NODE_ENV         | `production`                     | node.js environment                                  |
+| NGINX_PORT       | `3001`                           | nginx http port                                      |
+| NGINX_HOSTNAME   | `open-haus.lan, open-haus.local` | nginx hostname                                       |
+| BACKEND_PROTOCOL | `http`                           | OpenHaus backend http protocol                       |
+| BACKEND_HOST     | `127.0.0.1`                      | OpenHaus backend http host                           |
+| BACKEND_PORT     | `8080`                           | OpenHaus backend http port                           |
+| RESOLVER         | `127.0.0.11`                     | DNS resolver used inside the backend location block. |
+
+### Build
+```sh
+npm run build:docker
+```
+
+### Export the Image
+```sh
+docker save openhaus/admin-frontend:latest | gzip > ./admin-frontend-vX.X.X-docker.tgz
+```
+
+### Start a container
+```sh
+docker run --net=host --name=admin-frontend openhaus/admin-frontend:latest
+```
+The host network is neede when you run the backend on the docker host itself.<br />
+If you use the backend in a container or the "Quick-Start" docker example, its not needed.
+
+## Description
+This is a User Interface for the HTTP backend API.<br />
+Its basicly a GUI for the [postman collection](https://github.com/OpenHausIO/backend/blob/dev/postman.json).
+
+- [Postman](https://www.postman.com/)
+- [Collection](https://raw.githubusercontent.com/OpenHausIO/backend/dev/postman.json)
 
 ## Screenshots
-
-### Rooms
-![Roooms grouped](./docs/img/rooms-grouped.png)
-Rooms are grouped by floor, they are on.
-<br /><br />
-
-![Roooms ungrouped](./docs/img/rooms-ungrouped.png)
-Rooms ungrouped.
-<br /><br />
-
-![Rooom](./docs/img/room.png)
-Endpoints in a room after clicking on a room tile
-
----
-
-### Endpoints
-![Endpoints grouped](./docs/img/endpoints-grouped.png)
-Endoints are grouped by room they are in.,
-<br /><br />
-
-![Endpoints ungrouped](./docs/img/endpoints-ungrouped.png)
-Endpoints appear as they are, ungrouped.
-<br /><br />
-
-![Endpoints Commands](./docs/img/endpoint.png)
-Commands a endpoint has/provide.
-<br /><br />
-
-![Endpoints Commands with parameter](./docs/img/endpoint-parameters-button.png)
-Commands with parameters (button/enum)
-<br /><br />
-
-![Endpoints Commands with parameter](./docs/img/endpoint-parameters-range.png)
-Commands with parameters (range)
-
-
----
-
-### Devices
-![Endpoints grouped](./docs/img/devices.png)
-Phsyical devices, if you click on it, you see all endpoints the devices provides
-<br /><br />
-
-![Endpoints un-grouped](./docs/img/devices-endpoints.png)
-Available endpoints without grouping them. Room name is added to tile.
+![Img1](./docs/img/img-1.png)
+![Img2](./docs/img/img-2.png)
+![Img3](./docs/img/img-3.png)
+![Img4](./docs/img/img-4.png)
+![Img5](./docs/img/img-5.png)
